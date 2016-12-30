@@ -1,5 +1,5 @@
 {
-    "name": "masterflash-ru/ado",
+    "name": "masterflash-ru/Ado",
     "description": "Аналог ADO от Microsoft",
     "type": "Service",
     "license": "BSD-3-Clause",
@@ -17,18 +17,18 @@
     },
     "autoload": {
         "psr-4": {
-            "ado\\": "src/"
+            "ADO\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "ado\\": "src/"
+            "ADO\\": "src/"
         }
     },
     "extra": {
         "zf": {
-            "component": "masterflash-ru\\ado",
-            "config-provider": "masterflash-ru\\ado\\ConfigProvider"
+            "component": "ADO",
+            "config-provider": "masterflash-ru\\ADO\\ConfigProvider"
         }
     }
 }
