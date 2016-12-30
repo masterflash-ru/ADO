@@ -1,5 +1,5 @@
 {
-    "name": "masterflash-ru/ADO",
+    "name": "masterflash-ru/ado",
     "description": "Аналог ADO от Microsoft",
     "type": "Service",
     "license": "BSD-3-Clause",
@@ -17,12 +17,12 @@
     },
     "autoload": {
         "psr-4": {
-            "ADO\\": "masterflash/ADO/src/"
+            "ado\\": "masterflash/ado/src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "ADO\\": "src/"
+            "ado\\": "src/"
         }
     }
 }
