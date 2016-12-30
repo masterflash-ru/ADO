@@ -30,5 +30,5 @@
             "component": "masterflash-ru\\ado",
             "config-provider": "masterflash-ru\\ado\\ConfigProvider"
         }
-    },
+    }
 }
