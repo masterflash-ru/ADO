@@ -16,25 +16,10 @@ public function getConfig()
         return include __DIR__ . '/../config/module.config.php';
     }
 
-  /* // Метод "init" вызывается при запуске приложения и  
+   // Метод "init" вызывается при запуске приложения и  
     // позволяет зарегистрировать обработчик событий.
-    public function init(ModuleManager $manager)
+    public function init( $manager)
     {
-        // Получаем менеджер событий.
-        $eventManager = $manager->getEventManager();
-        $sharedEventManager = $eventManager->getSharedManager();
-    }*/
-
-
-
-public function onBootstrap(MvcEvent $e)
-{
-	$sm = $e->getApplication()->getServiceManager();
-	$config=$sm->get('config');
-	define("ADO_LOCALE",$config["db"]["locale"]);
-
-
-
 	define("adStateClosed", 0); // по умолчанию
 	define("adStateOpen", 1);
 
@@ -148,6 +133,19 @@ public function onBootstrap(MvcEvent $e)
 	define("adEditInProgress",1);	//редактирвоание проводилось, но изменения не сохранены
 	define("adEditAdd",2);	//текущая запись была добавлена методом AddNew
 	define("adEditDelete",4);	//текущая запись была удалена
+		
+    }
+
+
+
+public function onBootstrap(MvcEvent $e)
+{
+	$sm = $e->getApplication()->getServiceManager();
+	$config=$sm->get('config');
+	define("ADO_LOCALE",$config["db"]["locale"]);
+
+
+
 }
 /*позволяет настраивать ServiceManager и эквивалентен 
 ключу массива config в разделе service_manager в module.config.php.* /

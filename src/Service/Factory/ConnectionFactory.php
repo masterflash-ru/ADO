@@ -19,7 +19,10 @@ public function __invoke(ContainerInterface $container, $requestedName, array $o
 		 $config=$config["db"];
 		 
 		 $connection=new Connection();
-		 $dsn = $config["driver"]."://".$config["login"].":".$config["password"]."@".$config["host"]."/".$config["database"];
+		 
+		 $init="PDO::MYSQL_ATTR_INIT_COMMAND=set names ".$config["character"];
+		 
+		 $dsn = $config["driver"]."://".$config["login"].":".$config["password"]."@".$config["host"]."/".$config["database"]."?".$init;
 		$connection->ConnectionString=$dsn;
 		$connection->open();
         return $connection;

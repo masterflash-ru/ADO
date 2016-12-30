@@ -143,8 +143,7 @@ class MysqlPdo {
 											if (defined($p1[0]))	$param[ constant($p1[0])]=$p1[1];
 										}
 							}
-				
-				
+
 				@$connect_link = new PDO ( str_ireplace ( "MysqlPdo", "mysql", $dsna ['scheme'] ) . ':dbname=' . $dsna ['path'] . ';host=' . $dsna ['host'], $dsna ['user'], $dsna ['pass'] ,$param);
 				$connect_link->setAttribute ( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
 		
