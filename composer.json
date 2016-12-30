@@ -24,5 +24,11 @@
         "psr-4": {
             "ado\\": "src/"
         }
-    }
+    },
+    "extra": {
+        "zf": {
+            "component": "masterflash-ru\\ado",
+            "config-provider": "masterflash-ru\\ado\\ConfigProvider"
+        }
+    },
 }
