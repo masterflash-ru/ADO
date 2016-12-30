@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<message>
+	<msg id="1">Provider %0 not found.</msg>
+	<msg id="2">Cursor &quot;Forward Only&quot; prohibits the movement back	through the records</msg>
+	<msg id="3">Add new entries allowed.</msg>
+	<msg id="4">Delete entries prohibited</msg>
+	<msg id="5">Change the recording is prohibited.</msg>
+	<msg id="6">Invalid reference to object RecordSet.</msg>
+	<msg id="7">Do not use the method %0 for establishing the properties MaxRecords not equal to zero.</msg>
+	<msg id="8">Invalid parameter value in the filter.</msg>
+	<msg id="9">Object %0 already open.</msg>
+	<msg id="10">Not defined data source.</msg>
+	<msg id="11">Change the parameter %0 with an open RecordSet is not permissible.</msg>
+	<msg id="12">File %0 not found.</msg>
+	<msg id="13">The wrong call ADO.</msg>
+	<msg id="14">Not determined the temporary folder.</msg>
+	<msg id="15">Invalid sorting method.</msg>
+	<msg id="16">The index is invalid for filtering.</msg>
+	<msg id="17">An invalid data type of the parameter - %0</msg>
+	<msg id="18">The expansion of the %0 is not installed in PHP.</msg>
+</message>

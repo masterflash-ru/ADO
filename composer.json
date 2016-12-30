@@ -1,0 +1,28 @@
+{
+    "name": "masterflash-ru/ADO",
+    "description": "Аналог ADO от Microsoft",
+    "type": "Service",
+    "license": "BSD-3-Clause",
+    "keywords": [
+        "framework",
+        "ado",
+        "zf"
+    ],
+    "homepage": "http://www.masterflash.ru/",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "php": "^5.6 || ^7.0",
+        "zendframework/zend-session": "^2.7"
+    },
+    "autoload": {
+        "psr-4": {
+            "ADO\\": "masterflash/ADO/src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ADO\\": "src/"
+        }
+    }
+}
