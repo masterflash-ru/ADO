@@ -17,7 +17,7 @@
     },
     "autoload": {
         "psr-4": {
-            "ado\\": "masterflash/ado/src/"
+            "ado\\": "masterflash-ru/ado/src/"
         }
     },
     "autoload-dev": {
