@@ -26,6 +26,10 @@
         }
     },
     "extra": {
+		"branch-alias": {
+        	"dev-master": "1.0-dev",
+                "dev-develop": "1.0-dev"
+	        },
         "zf": {
             "component": "ADO",
             "config-provider": "masterflash-ru\\ADO\\ConfigProvider"
