@@ -1,6 +1,10 @@
 <?php
 // ----------------------------------- RecordSet
 /*
+8.3.17 - исправлена функция Close - она кроме всего прочего вызывает одноименный метод в драйвере, нужна для освобождения буфера, например, после вызова процедуры в MySql
+8.3.17 - введены функции для работы с внешними сущностями, используя гидратацию, можно так же вносить изменения в базе. RS использует внешний объект для работы
+		с этими функциями 
+
 20.12.2016 - перешли на ZF3, используется сессия, но используется нативные функции сессии, связано с многомерным массивом, а ZF3 сессии видимо не поддерживают прямого
 			создания таких массивов, видимо нужно городить внешнее создание такого массива и потом уже запись в сессию ZF3 
 
@@ -14,7 +18,7 @@
 
 
 08.08.14 - исправлены ошибки связанные с граничными условиями буфера и обратной перемотки записей
-4.08.14 - введена проверка, если в поле заносится тоже самое значение, тогда поле не модифицируется и не ставится влаг изменения!
+4.08.14 - введена проверка, если в поле заносится тоже самое значение, тогда поле не модифицируется и не ставится влаг изменения! это экономит и память и щадит обращения в базу
 
 19.06.14 - исправлена ошибка обработки удаления записи в буфере (без перечитывания буфера)
 14.06.14 - исправлена ошибка записи в RS ID новой записи
@@ -46,15 +50,14 @@ use ADO\Exception\ADOException;
 use ADO\Service\Command;
 use \stdClass;
 
+use ADO\Entity\EntityRepository;
+
+
 class RecordSet
 {
 	/*
 	 * объект работы с данными непосредственно
 	 */
-	
-	
-	
-	// public $AbsolutePosition; //внутренний указатель записей (порядковй номер  // 1-....)
 	public $PageCount; // всего страниц
 	public $ActiveConnect; // объект connect
 	public $ActiveCommand; // хранит объект command, еоторый породил данный  // объект, или пусто
@@ -87,8 +90,14 @@ class RecordSet
 	public $RecordSetName; // имя данного рекорд сета (это в ADO NET) нужно для  генерации XML
 	public $DataColumns; // коллекция объектов DataColumn
 
+	
+	/*кеш экземпляров EntityRepository*/
+	protected $repositoryList=[];
+	
+	
+	
 	// перегруженное сво-ва
-	public $container = array('maxrecords' => NULL,   // указывает максимальное  кол-во записей которые  помещаются в объект  recordset, по умолчанию  10, если 0  тогда считать все записи  в кеш
+	protected $container = ['maxrecords' => NULL,   // указывает максимальное  кол-во записей которые  помещаются в объект  recordset, по умолчанию  10, если 0  тогда считать все записи  в кеш
 											'sort' => '',	 // сортировка ПОСЛЕ чтения из базы данных, из "order by ID desc" указывается только "ID desc"
 											'filter' => '',	 // Выборка записей в рекордсете по условию, работает только при $this->_MaxRecords =0
 											'pagesize' => 10,	 // кол-во записей в одной странице Этот параметр обрабатывает перегрузка, чтобы пересчитать кол-во страниц при изменении $PageSize
@@ -98,21 +107,23 @@ class RecordSet
 											'cursortype' => NULL, 
 											'locktype' => NULL, 
 											'source' => NULL,			 // источник дaнных
-											'absoluteposition' => NULL);	// абсолютный номер записи 1..
+											'absoluteposition' => NULL,	// абсолютный номер записи 1..
+											
+											];	
 
 	private $stmt; // объект результата, в формате провайдера! хранит результат
-   //private $stmt_dop;//объект результата, в формате  провайдера! Копия, храит результат выборки без каких либо  обработок
-	private $rez_array = array(); // хранит массив результата, кол-во элементов  определеячется размером _MaxRecords
+
+	private $rez_array = []; // хранит массив результата, кол-во элементов  определеячется размером _MaxRecords
 
 	// хранит старое значение $rez_array, когда мы редактируем записи, эти  значения нужны что бы в условии SQL  выбрать  верную запись, хранится не все, а только
 	//  МОДИФИЦИРОВАННЫЕ записи, ключи идентичны
-	private $old_rez_array = array();
+	private $old_rez_array = [];
 
 	// точная копия $rez_array - нужна для возвращения при отмене или изменении
 	// фильтра или сортировки
-	private $temp_rez_array = array('sort' => array(), 'filter' => array());
+	private $temp_rez_array = array('sort' => [], 'filter' => []);
 
-	private $AbsolutePosition_min_max = array(); // хранит верхний и нижний номер $AbsolutePosition который находится в $rez_array (т.е. в кеше)
+	private $AbsolutePosition_min_max = []; // хранит верхний и нижний номер $AbsolutePosition который находится в $rez_array (т.е. в кеше)
 	private $columnCount; // кол-во колонок в таблице что бы не обращаться лишний раз в базу данных
 
 	// хранит номер найденой записи в методе Find, нужно для реализации продолжения поиска
@@ -128,15 +139,15 @@ class RecordSet
 	 * Array ( [id] => 0 [name] => 1 [value] => 2 [modul] => 3 [sysname] => 4
 	 * [type_] => 5 )
 	 */
-	private $get_field_name_true = array();
+	private $get_field_name_true = [];
 	/*
 	 * Array ( [0] => id [1] => name [2] => value [3] => modul [4] => sysname
 	 * [5] => type_ )
 	 */
-	private $get_field_name_false = array();
+	private $get_field_name_false = [];
 	
 	// массив имен полей
-	private $columnNames=array();//имена колонок
+	private $columnNames=[];//имена колонок
 	
 	// хранит строку запроса для выборки, нужна для анализа возможности создания
 	// SQL для записи/обновления через данный объект
@@ -193,7 +204,7 @@ class RecordSet
 		// активное подключение указано?
 		if (is_null($ActiveConnect) && $this->ActiveConnect instanceof Connection) 
 				{ // нет не указано, если оно есть, то записываем его
-		  		  if ($this->container['source'] instanceof Command)	$this->container['source']->ActiveConnection = $this->ActiveConnect;
+		  		  if ($this->container['source'] instanceof Command)	 {$this->container['source']->ActiveConnection = $this->ActiveConnect;}
 				} 
 			else 
 				{
@@ -218,7 +229,7 @@ class RecordSet
 				}
 		
 		$this->ActiveCommand = $this->container['source'];
-		$this->rez_array = array(); // кеш результата (буфер обмена)
+		$this->rez_array = []; // кеш результата (буфер обмена)
 		$this->AbsolutePosition_min_max = array(0, 0); // верхний-нижний номер AbsolutePosition (нумерация с 1, если 0, значит не определено
 		$this->BOF = true;
 		$this->EOF = true;
@@ -234,50 +245,39 @@ class RecordSet
 		$Parameters = NULL;
 		if (is_null($Options))   $Options = adCmdText;
 			// сделаем обращение в базу через объект command
-		//$flag_for_Execute_rs = true; // флаг объект Command возвращает даннеые во внутреннем формате
 		
 		$a = $this->container['source']->Execute($RecordsAffected, $Parameters, $Options + adExecuteNoCreateRecordSet); // запрос  в  command,  а  он  вызывает  Execute  объекта  Command
 		$this->stmt = $a['stmt'];
-		// $this->stmt_dop=$a['stmt_dop'];
 		
 		$this->RecordCount = $RecordsAffected; // кол-во записей
-		//echo $RecordsAffected." ";
 		if ($RecordsAffected > 0)
 			 {
 			$this->EOF = false; // если записей >0 метку сонца поставить в false
 			}
 		$this->Fields = new Fields(); // коллекция полей
 		$this->DataColumns = new DataColumns(); // коллекция полей кол-во колонок в результирущем наборе
-		$this->rez_array[0] = array();
+		$this->rez_array[0] = [];
 		$this->columnCount = $this->container['source']->ActiveConnection->driver->columnCount( $this->stmt);
 		for ($i = 0; $i < $this->columnCount; $i ++) 
 				{ // сделаем запрос провайдеру для полечения записи
 					$ColumnMeta = $this->container['source']->ActiveConnection->driver->loadColumnMeta($this->stmt, $i);
-				// print_r($ColumnMeta);
-				if (isset($ColumnMeta['table']))	$this->RecordSetName = $ColumnMeta['table']; // имя  объекта  равно  имени  таблицы  с  выборкой
-					else	$this->RecordSetName = "RecordSet"; // имя неизвестно
-			$field = new Field($ColumnMeta);
-			$field->set_parent_recordset($this); // укажем объекту Field  родительский RecordSet,  что бы при  изменении в полях  вызывались функции  рекордсета
-			$this->Fields->Add($field); // отправим в коллецию
+					$ColumnMeta["Ordinal"]=$i;
+					if (isset($ColumnMeta['table']))
+						{$this->RecordSetName = $ColumnMeta['table'];} // имя  объекта  равно  имени  таблицы  с  выборкой
+						else {$this->RecordSetName = "RecordSet";} // имя неизвестно
+					
+					$field = new Field($ColumnMeta);
+					$field->set_parent_recordset($this); // укажем объекту Field  родительский RecordSet,  что бы при  изменении в полях  вызывались функции  рекордсета
+					$this->Fields->Add($field); // отправим в коллецию
 				 
-			// print_r($field);
-				 // $this->columnNames[$i]=$this->Fields->Item[$i]->Name;//имя
-				 // поля
 				 
-			// ---------------------------------------------------------данный
-				 // раздел в зачаточном состоянии!!!!!!!!!!!!!
-				 // генерируем коллекцию DataColumn
-			$DataColumn = new DataColumn($this->Fields->Item[$i]->Name, $ColumnMeta['Type']);
-			$DataColumn->Ordinal = $i;
-			$DataColumn->Table = $ColumnMeta['table'];
-			$DataColumn->Caption = $this->Fields->Item[$i]->Name;
-			$DataColumn->AllowDbNull = ! in_array('not_null', $ColumnMeta['flags']);
-			$DataColumn->AutoIncrement = in_array('primary_key',  $ColumnMeta['flags']);
-			$this->DataColumns->Add($DataColumn);
-			$this->rez_array[0][$i] = NULL;
-			// print_r($this->container['source']->ActiveConnection->driver->loadColumnMeta($this->stmt,$i));
-			// print_r($ColumnMeta['flags']);
-		}
+					// ---------------------------------------------------------данный
+						 // раздел в зачаточном состоянии!!!!!!!!!!!!!
+						 // генерируем коллекцию DataColumn
+					$DataColumn = new DataColumn($this->Fields->Item[$i]->Name, $ColumnMeta);
+					$this->DataColumns->Add($DataColumn);
+					$this->rez_array[0][$i] = NULL;
+			}
 		//флаги изменения записей в буфере (ДО ОТПРАВКИ В БАЗУ)
 		$this->rez_array[0]['status'] = array(
 																'flag_delete' => false, 				//флаг удаления записи
@@ -298,7 +298,7 @@ class RecordSet
 		$this->get_field_name_true = $this->get_field_name(true);
 		$this->get_field_name_false = $this->get_field_name(false);
 		
-		if (empty($this->RecordCount)) $this->rez_array = array(); // если нет записей, обнуляем буфер
+		if (empty($this->RecordCount)) $this->rez_array = []; // если нет записей, обнуляем буфер
 	
 	}
 
@@ -439,7 +439,7 @@ class RecordSet
 							return;
 						}
 				// промах кеша, считаем записи
-				// $this->rez_array=array();//сбросить
+				// $this->rez_array=[];//сбросить
 				
 				if ($this->container['maxrecords'] > 0)  $Recorditem = $this->container['maxrecords']; // указан  максимум  записей  в  кеше
 			   				 else   $Recorditem = $this->RecordCount; // по умолчанию грузим все проверим допустимость верхний предел
@@ -458,28 +458,28 @@ class RecordSet
 					//дополнительная проверка что бы не вылетели за пределы буфера isset($this->rez_array[$NewAbsolutePosition -  $this->AbsolutePosition_min_max[0]])
 				if ($NewAbsolutePosition > $this->container['absoluteposition'] || (isset($this->rez_array[$NewAbsolutePosition -  $this->AbsolutePosition_min_max[0]]) && $this->rez_array[$NewAbsolutePosition -  $this->AbsolutePosition_min_max[0]]['status']['flag_deleting'])) 
 						{ // считать  записи  в  кеш
-						$rez_array = array(); // echo $NewAbsolutePosition.' ';
+						$rez_array = [];
 						// передвинуть указатель вначале проверим, текущая запись была изменена или это новая запись?
 						// проверяем все записи в памяти, т.к. полностью перегружаем кеш пробежим по буферу (кешу) и сохраним измененные записи
-						if (! empty($this->stmt) && ! $this->add_new_metod)  $this->container['source']->ActiveConnection->driver->stmt_data_seek( $this->stmt, $NewAbsolutePosition ); 
+						if (! empty($this->stmt) && ! $this->add_new_metod) 
+							{
+								$this->container['source']->ActiveConnection->driver->stmt_data_seek( $this->stmt, $NewAbsolutePosition ); 
+							}
 						for ($i = 0; $i < $this->records_in_buffer; $i ++) 
 								{ // echo $NewAbsolutePosition.':'.$i."\n";
 								if (count( array_intersect( array('flag_change', 'flag_new', 'flag_delete', 'preserveptatus'),  array_keys( $this->rez_array[$i]['status'],  true))) > 0)
 										 { // да,  была  модификация,  сохраним  во  временный  файл
 											$file_name = md5($i . microtime()); // имя временного файла
-											if (empty($this->old_rez_array[$i]))$this->old_rez_array[$i] =$this->rez_array[$i];//на всякий случай
+											if (empty($this->old_rez_array[$i])) {$this->old_rez_array[$i] =$this->rez_array[$i];}//на всякий случай
 											file_put_contents(sys_get_temp_dir() . $file_name,  serialize( array($this->old_rez_array[$i], $this->rez_array[$i])));
-											// echo $i+$this->AbsolutePosition_min_max[0]-1;
-											// echo ' ';
 											// индекс формируется номер_записи + номер_записи_в_начале_буфера -1
-											$_SESSION['ADORecordSet'][$this->RecordSetId][$i + $this->AbsolutePosition_min_max[0] - 1] = $file_name; // echo $file_name."\n";
+											$_SESSION['ADORecordSet'][$this->RecordSetId][$i + $this->AbsolutePosition_min_max[0] - 1] = $file_name;
 										}
 							
-								} // echo $NewAbsolutePosition.' ';
-							  // exit;
+								} 
 							  // непосредственно считать в кеш записи
-							  // echo $NewAbsolutePosition.':
-							  // '.$Recorditem."\n";
+
+	
 							for ($i = 0; $i < $Recorditem; $i ++) 
 								{
 								// проверим есть ли во временных файлах данная
@@ -571,8 +571,6 @@ class RecordSet
 				// переход назад?
 				if ($NewAbsolutePosition < $this->container['absoluteposition'])
 						 { 
-						 	//echo "Recorditem=$Recorditem";
-							//echo "tek:".$this->container['absoluteposition']." ";
 							// считать  записи  в  кеш  print_r($_SESSION['ADORecordSet'][$this->RecordSetId]);
 							  if (!empty($this->stmt) && !$this->add_new_metod)  
 							  		{
@@ -580,7 +578,7 @@ class RecordSet
 										$this->container['source']->ActiveConnection->driver->stmt_data_seek($this->stmt, $NewAbsolutePosition );
 										
 									}
-							$rez_array = array();// новая  запись? проверяем все записи в памяти, т.к. полностью перегружаем кеш
+							$rez_array = [];// новая  запись? проверяем все записи в памяти, т.к. полностью перегружаем кеш
 							// foreach ($this->rez_array as $i=>$rez_array_)
 							for ($i = 0; $i < $this->records_in_buffer; $i ++) 
 							{ // echo $NewAbsolutePosition.':'.$i."\n";
@@ -713,7 +711,7 @@ class RecordSet
 	if (count( array_intersect( array('flag_change', 'flag_new', 'flag_delete'),  array_keys($this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]]['status'],  true))) == 0)  return;
 	// print_r($this->rez_array);
 	$new = $this->rez_array[$this->container['absoluteposition'] -  $this->AbsolutePosition_min_max[0]];
-   // print_r($new['status']);
+
 	// когда создаем новую запись, то в $this->old_rez_array  ничего нет,  просто загрузим туда копию из $this->rez_array, типа новая запись это исключит предупреждение о
 	// несуществующем массиве
    if (empty($this->old_rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]]))
@@ -725,19 +723,11 @@ class RecordSet
    $status = $new['status']; // статус  записи (новая/измененная)
    unset($new['status']);
    unset($old['status']);
-   // if (empty($new)) {echo "E";print_r($new);}
-  // результат выборки старое значение новое значение
- // print_r($this->get_field_name_false);
-  //print_r($old);
-  //если удаляем текущую запись, то она не обязательно была в $old (т.е. не модифицировалась! поэтому копируем с текущей)
- // if (empty($old) && $status=='flag_delete') {$old=$new;}
  
 
  $sql = $this->container['source']->ActiveConnection->driver->create_sql_update(
  																							 $this->stmt, array_combine( $this->get_field_name_false, $old), 
 																								array_combine( $this->get_field_name_false, $new), $status); // сгенерировать
- //$sql = $sql['sql']; // нас интересует  только  строка  SQL  исполнить  запрос  через  объект  connection 
- //echo  $sql['sql']."\n";
  $RecordsAffected = 0;
  try {
 		$this->container['source']->ActiveConnection->Execute($sql['sql'], $RecordsAffected, adExecuteNoRecords, NULL); // просто исполинть  и все
@@ -793,7 +783,7 @@ class RecordSet
 		const  adAffectGroup=2;//удаление/обновление  все  записи  удовлетворяющие  фильтру  или  указаным  закладкам,  если  они  не  установлены,  тогда  ничего  не  удаляем  
 		const  adAffectAll=3;//удаление/обновление  все  записи  удовлетворяющие  фильтру  (закладкам)  если  они  указаны,  если  ничего  не  указано,  обрабатывает  все  записи  
 		adAffectAllChapters=4;//все */
-	   $sql_s = array(); // результат   обработкивпровайдере(массив массивов)
+	   $sql_s = []; // результат   обработкивпровайдере(массив массивов)
 		if ($AffectRecords == adAffectCurrent) 
 						{ // удаление  только  текущей  записи
 							if (isset($this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]]['status']))	 $this->rez_array[$this->container['absoluteposition'] -
@@ -932,9 +922,9 @@ class RecordSet
 	 			{ 
 					// новые  записи  были  готовим  SQL,  для  типа  inset  обработка  отличается,  там  накапливаем  что  бы  все  вместить  в  
 					//одну  инструкцию  SQL
-					$sql_rez = array();
+					$sql_rez = [];
 					$sql_insert_start = NULL;
-					$sql_insert_values = array();
+					$sql_insert_values = [];
 
 					 foreach ($sql_s as $k => $v) 
 					 				{
@@ -1011,16 +1001,13 @@ $this->set_status();
 }
 
 public function Close ()
-{ // удаляет  объект  рекордсет, и  освобождает  память
-$this->State = 0; // объект
-$this->stmt->closeCursor();
+{ // удаляет  объект  рекордсет, и  освобождает  память, в драйвере вызывается Close для освобождения, актуально для процедур в MySql
+$this->State = 0;
+$this->container['source']->ActiveConnection->driver->Close($this->stmt);
 $this->stmt = NULL;
-$this->rez_array = array();
-$this->old_rez_array = array();
-$this->temp_rez_array = array(
-													'sort' => array(), 
-													'filter' => array()
-												);
+$this->rez_array = [];
+$this->old_rez_array = [];
+$this->temp_rez_array = array('sort' => [], 	'filter' => []);
 }
 
  public function Delete ( $AffectRecords = adAffectCurrent)
@@ -1109,7 +1096,7 @@ if ($Start) $this->Move( $SkipRows,  $Start); // перейти  к  закла�
 							}
 	// поиск назад
 	 if ($SearchDirection ==  adSearchBackward)
-			 				{ // $this->MoveLast();//переместиться в конец
+			 				{
 								while (! $this->BOF)
 										 { // крутимся  пока  не  конец  записей
 											$arr_item = $this->rez_array[$this->container['absoluteposition'] -
@@ -1135,24 +1122,24 @@ public function GetRows ( $Rows = adGetRowsRest,   $Start = NULL,  $Field = NULL
  $Field - порядкоевые имена, имена полей (массив) которые нужно получить
  */
  if (empty($Rows)) $Rows = adGetRowsRest; // по умолчанию, если вдруг  будет  пусто
- if (empty($Field))$Field = array();
+ if (empty($Field))$Field = [];
 
  if (! is_array( $Field))  $Field = array($Field);
  $f = $this->get_field_name_false; // получить  все поля
  if (count( $Field) > 0)  $f = array_intersect(  $f,  $Field); // оставить только те поля,который  мы указали в $Field
- if (count($f) == 0)  return array(); // нет  полей  для  вборки,  выходим
+ if (count($f) == 0)  return []; // нет  полей  для  вборки,  выходим
  if ($Rows & adGetRowsRest &&  ! empty($Start)) 
  		{ 
 			// перейти  на  указаную  запись,  и  от  нее  стартовать  выборку
 			$this->find_book_mark($Start);
 		}
-	$rez = array(); // выходной  массив
+	$rez = []; // выходной  массив
 	//создаем пустые массивы, на тот случай если записей нет
 	foreach ($f as $number => $name)
 			{
 				if ($Rows & adGetRowsArrType)
-						 $rez[$name]=array();
-					 else $rez[$number ]= array();
+						 $rez[$name]=[];
+					 else $rez[$number ]= [];
 			}
 	
 	while (! $this->EOF) 
@@ -1176,21 +1163,15 @@ public function GetString ()
 
 public function NextRecordset (&$RecordsAffected = 0)
 { // возврат рекордсета для следующего запроса, если был мультизапрос
-	//$clone = clone ($this); // кнонировать данный  объект
 	$this->Close(); // закроем его
-	
 	$this->Open(); // откроем,  внутренний  счетчик  в  объекте  Command  переместит  на  след.  SQL,  и  исполнит  его
-	//echo "<pre>";print_r($this->RecordCount );
-	
-	//return $clone;
-
 }
 
 public function Requery ($Options = adCmdText)
 { //
 	$this->Close();
 	$this->State = 1;
-	$this->rez_array = array(); // кеш результата
+	$this->rez_array = []; // кеш результата
 	$this->AbsolutePosition_min_max = array(0, 0); // верхний-нижний
    // номер AbsolutePosition (нумерация с 1, если 0, значит не определено
 	$this->BOF = true;
@@ -1310,7 +1291,7 @@ private function RsFilter ()
  страниц  работает  только  при  ксловии  что  загружено  все,  т.е.  $this->_MaxRecords=0  иначе  фильтрация  просто  игнорируется */
 if ($this->container['maxrecords'] > 0) 
 		{
-			$this->temp_rez_array['filter'] = array();
+			$this->temp_rez_array['filter'] = [];
 			throw new ADOException(  $this->ActiveConnect,  7,   'RecordSet:' .	$this->RecordSetName,    array(  'RsFilter()'));
 		} // ошибка,  т.к.  не  все  записи  загружены  восстановить  кеш  в  полном  объеме,  что  бы  вновь  начать  фильтрацию
 if (count( $this->temp_rez_array['filter']))
@@ -1325,7 +1306,7 @@ if (count(  $this->temp_rez_array['filter']) &&! $this->container['filter'])
 		   // предельные границы
 		   $this->AbsolutePosition_min_max[0] = 1; // в начале  запись $AbsolutePosition
 		   $this->AbsolutePosition_min_max[1] = $this->RecordCount -1; // в конце номер последней
-		   $this->temp_rez_array['filter'] = array(); // освободим память
+		   $this->temp_rez_array['filter'] = []; // освободим память
 		   $this->jmp_record( 1);
 		   return;
 		   }
@@ -1340,7 +1321,7 @@ if (count(  $this->temp_rez_array['filter']) &&! $this->container['filter'])
 				 else 
 				 		{ // поиск закладок, они заданы в виде массива
 						 if (! is_array( $this->container['filter'])) throw new ADOException( $this->ActiveConnect,  'RecordSet:' .  $this->RecordSetName);
-						 $rez = array();
+						 $rez = [];
 						 foreach ($this->rez_array as $rez_array) 
 						 		{ // пробежим  по всем записям
 									 $a = array_search( $rez_array['status']['BookMark'],  $this->container['filter']); // ищем
@@ -1363,12 +1344,12 @@ private function RsSort ()
 */
 if ($this->container['maxrecords'] > 0) 
 	{
-	  $this->temp_rez_array['sort'] = array();
+	  $this->temp_rez_array['sort'] = [];
 	  throw new ADOException( $this->ActiveConnect,  7,  'RecordSet:' .$this->RecordSetName,  array('RsSort()'));
 	} // игнорировать  фильтр,  т.к.  не  все  записи  загружены
 
 $s1 = explode(',', str_replace("  ", " ", $this->container['sort'])); // отдельные  элменты  для  сортировки  +  удалим  лишние  пробелы
- $sort = array();
+ $sort = [];
  $i = 0;
  foreach ($s1 as $s) 
  	{
@@ -1386,13 +1367,13 @@ $s1 = explode(',', str_replace("  ", " ", $this->container['sort'])); // отд�
   if (count($this->temp_rez_array['sort']) &&  ! $this->container['sort']) 
   		{
 			$this->rez_array = $this->temp_rez_array['sort']; // вернуть как было до сортировок
-		  $this->temp_rez_array['sort'] = array(); // освободим память
+		  $this->temp_rez_array['sort'] = []; // освободим память
 		  $this->jmp_record(1); // перейти на первую запись
 		  return;
 		  }
 	  
 $i = 0;
-$sort_ = ADO::Sort(); // экземпляр объекта сортировки
+$sort_ = new Sort(); // экземпляр объекта сортировки
 $sort_->setArray($this->rez_array);
 $field_name = $this->get_field_name_true; // имена  полей  добавим  то  что  будем  сортировать
 foreach ($sort as $v)
@@ -1403,16 +1384,72 @@ $this->jmp_record(1);
  }
 	  
 
+
+
+/*
+ОБНОВЛЕНИЕ из заполненной сущности в базу
+$entity - экземпляр сущности с заполненными данными
+$do_update - флаг немедленного внесения в базу (true)
+			false - записывается в буфер, update производится отдельно (программист заботится!), полезно для пакетной обработки
+*/
+public function persist($entity,$do_update=true)
+{
+	if (!is_object($entity)) {throw new ADOException(NULL, 26,NULL, [gettype($entity)] );}//не допустимый тип
+	$r=$this->getRepository(get_class($entity))->persist($entity);
+	if ($do_update) {$this->Update();}
+}
+
+
+/*
+Гидратация данных в виде массива объектов
+$entityName - Имя объекта куда будет все грузиться с позиции на которую указывается в RS
+возвращает массив этих объектов
+*/
+public function FetchEntityAll($entityName)
+{
+	return $this->getRepository($entityName)->FetchEntityAll();
+}
+
+/*
+Гидратация данных в виде объекта
+$entityName - Имя объекта куда будет все грузиться
+возвращает заполненный объект, данными на который указывает в RS
+*/
+public function FetchEntity($entityName)
+{
+	return $this->getRepository($entityName)->FetchEntity();
+}
+
+
+
 // *******************
 // служебные
+
+
+
+/*
+получить экземпляр репозитарий по имени
+по именам эти экземпляры кешируются
+*/
+private function getRepository($entityName)
+{
+	if (!is_string($entityName)) {throw new ADOException(NULL, 20 );}//не допустимый тип
+    if (isset($this->repositoryList[$entityName])) {
+            return $this->repositoryList[$entityName];
+        }
+	$this->repositoryList[$entityName] =new EntityRepository($this,$entityName);
+	return $this->repositoryList[$entityName];
+}
+
+
+
 private function find_book_mark ($BookMark = '')
 { // поиск по закладке
 if (! $BookMark) return;
 $absolite_position = $this->container['absoluteposition']; // сохраним  позицию,  если  не  найдем,  то  перейдем  к  ней
 $this->jmp_record(1); // перейдем в начало
 while (! $this->EOF)		   // пройдемся по всем записям
-		  { // echo
-			// $this->container['absoluteposition'].'-'.$this->container['bookmark'].'/'.$this->container['bookmark'].'####';
+		  {
 			  if ($this->container['bookmark'] ==  $BookMark)   {  return; } // нашли, в рекордсете текущая запись точо соотвествует закладке
 			  $this->MoveNext();
 		  }
@@ -1422,9 +1459,9 @@ while (! $this->EOF)		   // пройдемся по всем записям
 
 private function get_field_name ($type = false)
 { // получить  массив  имен  полей  $type-  тип  выхода  false:  array(0=>имя,....),  иначе  array(имя=>номер  по  порядку)
-if (! isset( $this->rez_array[0])) return array(); // если рекордсет пустой, то выход
+if (! isset( $this->rez_array[0])) return []; // если рекордсет пустой, то выход
 $i = 0;
-$field_name = array();
+$field_name = [];
 if ($type) 
 		{
 		  foreach ($this->rez_array[0] as $v) 
@@ -1475,7 +1512,6 @@ $this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_
 // присвоить  новое  значение  изменим  статус  записи  на  "модифицированная"  только  в  том  случае,  если  это  не  новая  запись
  if (! $this->rez_array[$this->container['absoluteposition'] -  $this->AbsolutePosition_min_max[0]]['status']['flag_new'])
 									  $this->rez_array[$this->container['absoluteposition'] -  $this->AbsolutePosition_min_max[0]]['status']['flag_change'] = true;
- // print_r($this->rez_array);
 }
 
 private function set_status ()
@@ -1485,12 +1521,11 @@ if (! isset( $this->rez_array[$this->container['absoluteposition'] -  $this->Abs
 $status = $this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]]['status'];
 // нужно менять статус записи или нет?
 if ($status['preserveptatus'])  return;
-// print_r($status);
+
 if ($status['flag_new']) {$this->Status += adRecNew;$this->EditMode=adEditAdd;}
 if ($status['flag_change'])  {$this->Status += adRecModified;$this->EditMode=adEditInProgress;}
 if ($status['flag_canceled']) {$this->Status += adRecCanceled;$this->EditMode=adEditNone;}
 if ($status['flag_delete']) {$this->Status += adRecDeleted;$this->EditMode=adEditDelete;}
- // echo  $this->Status.'
 }
 
 
@@ -1600,13 +1635,17 @@ switch ($var)
 									  else  throw new ADOException($this->ActiveConnect, 11, 'RecordSet:' .	$this->RecordSetName ." [$var]",    array($var));
 			  break;
 			  } // блокировки рекордсета
+	  
+	  
+	  
+	  
 	  }
 }
 
 public function &__get ($var)
  {
 	$var = strtolower($var);
-	if (array_key_exists( $var, $this->container)) return $this->container[$var];
+	if (array_key_exists( $var, $this->container)) {return $this->container[$var];}
 	$arr = debug_backtrace();
 	trigger_error("Undefined property: RecordSet::\$$var in " . $arr[0]['file'] . " on line " . $arr[0]['line'], E_USER_WARNING);
 	  return $this->container['absolutepage'];
@@ -1618,29 +1657,27 @@ public function __call ( $name,  $var)
  		{
 			$this->change_value($var[0]);  return;
 		  }
-// echo 'Metod '.$name." is not found in RecordSet object!\n";
  throw new ADOException($this->ActiveConnect,   6, 'RecordSet:' . $this->RecordSetName);
  }
 
 public function _get_rec_error ()
 {
 if (isset($this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]]))
-								  return $this->rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]]['status']['errors'];
+	return $this->rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]]['status']['errors'];
 	  else  return NULL;
 }
 
 public function __destruct ()
-{ // удаляем временные файла echo '__destruct() '; print_r($_SESSION['ADORecordSet'][$this->RecordSetId]);
-if (isset($_SESSION['ADORecordSet'][$this->RecordSetId]) &&   is_array( $_SESSION['ADORecordSet'][$this->RecordSetId])) 
-	{
-		foreach ($_SESSION['ADORecordSet'][$this->RecordSetId] as $f) 
-			{
-				unlink(sys_get_temp_dir() . $f);/*echo sys_get_temp_dir().$f.' ' ;*/}
-		  }
-	  unset($_SESSION['ADORecordSet'][$this->RecordSetId]);
-	}
+{
+	if (isset($_SESSION['ADORecordSet'][$this->RecordSetId]) &&   is_array( $_SESSION['ADORecordSet'][$this->RecordSetId])) 
+		{
+			foreach ($_SESSION['ADORecordSet'][$this->RecordSetId] as $f) 
+				{
+					unlink(sys_get_temp_dir() . $f);/*echo sys_get_temp_dir().$f.' ' ;*/
+				}
+		}
+	unset($_SESSION['ADORecordSet'][$this->RecordSetId]);
+}
 
-// *************************
-// конец
- // перегрузки
+
 }
