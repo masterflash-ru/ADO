@@ -9,9 +9,9 @@ use ADO\Exception\ADOException;
 class Sort
 {
  	// The array to be sorted
- 	public $arr = array();
+ 	public $arr = [];
 
- 	public $sortDef = array();
+ 	public $sortDef = [];
  	
  	// направление сортировки
  	const ASC = 1;
@@ -21,8 +21,8 @@ class Sort
  	// Constructor
  	function __construct ()
  	{
- 	 	$this->arr = array();
- 	 	$this->sortDef = array();
+ 	 	$this->arr = [];
+ 	 	$this->sortDef = [];
  	}
  	
  	// setArray method - sets the array to be sorted
@@ -45,7 +45,7 @@ class Sort
  	 	$idx = $this->_getColIdx($colName);
  	 	if ($idx < 0) 
 			{
- 	 	 	$this->sortDef[] = array();
+ 	 	 	$this->sortDef[] = [];
  	 	 	$idx = count($this->sortDef) - 1;
 	 	 	}
  	 	$this->sortDef[$idx]["colName"] = $colName;
@@ -64,7 +64,7 @@ class Sort
  	// is not affected.
  	function resetColumns ()
  	{
- 	 	$this->sortDef = array();
+ 	 	$this->sortDef = [];
  	}
  	
  	// sort() method

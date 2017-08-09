@@ -1,6 +1,9 @@
 <?php
 // ----------------------------------- RecordSet
 /*
+9.8.17 - удалена FilterFind библиотека, ее место занял SQL_parser от PEAR (упрощенный), из-за простоты работы все встроено в RS
+
+
 8.3.17 - исправлена функция Close - она кроме всего прочего вызывает одноименный метод в драйвере, нужна для освобождения буфера, например, после вызова процедуры в MySql
 8.3.17 - введены функции для работы с внешними сущностями, используя гидратацию, можно так же вносить изменения в базе. RS использует внешний объект для работы
 		с этими функциями 
@@ -44,7 +47,7 @@ use ADO\Entity\DataColumns;
 use ADO\Entity\Fields;
 use ADO\Entity\Field;
 use ADO\Extend\Sort;
-use ADO\Extend\FilterFind;
+use ADO\Extend\Parser;
 use ADO\Extend\AdoXml;
 use ADO\Exception\ADOException;
 use ADO\Service\Command;
@@ -165,6 +168,8 @@ class RecordSet
 	
 	//хранит контейнер сессии
 	private $session;
+	protected $_cache_where=[];
+	protected $_cache_where1=[];
 	
 	public function __construct ()
 	{
@@ -1066,27 +1071,41 @@ public function Find ($Criteria, $SkipRows = 0,  $SearchDirection = adSearchForw
 */
 
 $field_name = $this->get_field_name_false;
-if ($SearchDirection == adSearchForward) $record_count = 1;
-			 else  $record_count = $this->RecordCount;
-if ($Start) $this->Move( $SkipRows,  $Start); // перейти  к  закладке, т.к. она явно указана
+if ($SearchDirection == adSearchForward) {$record_count = 1;}
+			 else  {$record_count = $this->RecordCount;}
+$md5_criteria=md5($Criteria);
+if ($Start) {$this->Move( $SkipRows,  $Start);} // перейти  к  закладке, т.к. она явно указана
 		else 
 			{
-				 if (! $this->Finding_record && ! $this->Find_Criteria_hash || md5( $Criteria) != $this->Find_Criteria_hash)
-				 			$this->jmp_record($record_count + $SkipRows); // ищем  с  самого  начала,  т.к.  это  первый  поиск
-						else  $this->jmp_record($this->Finding_record + $SkipRows); // ищем  с текущего  положения
-				 $this->Find_Criteria_hash = md5($Criteria);
+				 if (! $this->Finding_record && ! $this->Find_Criteria_hash || $md5_criteria != $this->Find_Criteria_hash)
+				 			{$this->jmp_record($record_count + $SkipRows);} // ищем  с  самого  начала,  т.к.  это  первый  поиск
+						else  {$this->jmp_record($this->Finding_record + $SkipRows);} // ищем  с текущего  положения
+				 $this->Find_Criteria_hash = $md5_criteria;
 			}
 
-
 			 // сейчас рекордсет установлен и готов к проверке на критерий в зависимости от направления крутимся в разные стороны
-			$find = new FilterFind(); // объект  поиска поиск  вперед
+			//$find = new FilterFind(); // объект  поиска поиск  вперед
+			 
+			if (!array_key_exists($md5_criteria,$this->_cache_where1))
+				{
+					$Parser=new Parser();
+					$struct=$Parser->parse($Criteria);
+					$this->_cache_where1[$md5_criteria]=$Parser->create($struct);
+				}
+			$s=$this->_cache_where1[$md5_criteria];
+			 
 			 if ($SearchDirection == adSearchForward) 
 			 			{
 							while (! $this->EOF) 
 									{ // крутимся  пока  не  конец  записей
 										$arr_item = $this->rez_array[$this->container['absoluteposition'] -
 										$this->AbsolutePosition_min_max[0]]; // текущая запись
-										if ($find->Filter($arr_item, $field_name,  $Criteria))
+										
+										unset($arr_item['status']); // удалим служебную информацию
+										$rez_array = array_combine($field_name, $arr_item); // сделать  массив что  бы ключи были  не  числовые а  имена полей,  и  преобразовать  в  переменные
+										extract($rez_array);
+										
+										if (eval($s))
 											 {
 												 $this->Finding_record = $this->container['absoluteposition'];
 												 return;
@@ -1295,9 +1314,9 @@ if ($this->container['maxrecords'] > 0)
 			throw new ADOException(  $this->ActiveConnect,  7,   'RecordSet:' .	$this->RecordSetName,    array(  'RsFilter()'));
 		} // ошибка,  т.к.  не  все  записи  загружены  восстановить  кеш  в  полном  объеме,  что  бы  вновь  начать  фильтрацию
 if (count( $this->temp_rez_array['filter']))
-								$this->rez_array = $this->temp_rez_array['filter'];
+								{$this->rez_array = $this->temp_rez_array['filter'];}
 							else
-								$this->temp_rez_array['filter'] = $this->rez_array;
+								{$this->temp_rez_array['filter'] = $this->rez_array;}
 // отмена фильтрации?
 if (count(  $this->temp_rez_array['filter']) &&! $this->container['filter']) 
 		{
@@ -1315,8 +1334,24 @@ if (count(  $this->temp_rez_array['filter']) &&! $this->container['filter'])
 			// если условие в виде строки, тогда ищем в отдельном объекте, иначе внутри рекордсета
  if (is_string($this->container['filter']))
 		 {
-			 $ff=new FilterFind();
-			 $this->rez_array = $ff->RsFilter( $this->rez_array,  $this->get_field_name_false,  $this->container['filter']); // выполнить фильтрацию
+			$rez = []; // очистить выходной буфер
+			$h=md5($this->container['filter']);
+			if (!array_key_exists($h,$this->_cache_where))
+				{
+					$Parser=new Parser();
+					$struct=$Parser->parse($this->container['filter']);
+					$this->_cache_where[$h]=$Parser->create($struct);
+				}
+			$s=$this->_cache_where[$h];
+			foreach ($this->rez_array as $rez_array) 
+				{
+					$rez_array_ = $rez_array;
+					unset($rez_array_['status']); // удалим служебные флаги
+					$rez_array_ = array_combine($this->get_field_name_false, $rez_array_); // сделать  массив что бы ключи были не числовые а имена полей, и преобразовать в переменные
+					extract($rez_array_);
+					if (eval($s)) {$rez[]=$rez_array;}
+				}
+				$this->rez_array= $rez;
 		 }
 				 else 
 				 		{ // поиск закладок, они заданы в виде массива
