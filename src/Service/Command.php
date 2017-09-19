@@ -4,6 +4,7 @@ namespace ADO\Service;
 
 use ADO\Entity\Parameters;
 use ADO\Exception\ADOException;
+use ADO\Entity\Parameter;
 
 // --------------------- COMMAND -параметрические зхапросы
 class Command
