@@ -2,6 +2,7 @@
 
 namespace ADO\Extend;
 use ADO\Extend\Parser\Lexer;
+use Exception;
 
 class Parser
 {
@@ -178,14 +179,15 @@ protected function isOperator()
 protected function getTok()
     {
         $this->token = $this->lexer->lex();
-        //echo $this->token . "\t" . $this->lexer->tokText . "\n";
+        //echo $this->token . "\t" . $this->lexer->tokText . "#\n";
     }
 
 protected function parseCondition()
 {
         $clause = [];$operator="";
 
-        while (true) {
+        while (true) 
+		{
             // parse the first argument
             if ($this->token == 'not') 
 				{
@@ -262,7 +264,7 @@ protected function parseCondition()
 					$operator=$not . $op;
             }
             // next argument [with operator]
-			
+
         }
 
         return $clause;
@@ -297,6 +299,7 @@ protected function parseIdentifier()
 		$this->getTok();
 		//var_Dump($this->token);
 		$tree = $this->parseCondition();
+		
         if (! is_null($this->token)) { $this->raiseError('Expected EOQ'); }
 
         return $tree;

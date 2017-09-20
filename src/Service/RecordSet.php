@@ -171,6 +171,9 @@ class RecordSet
 	protected $_cache_where=[];
 	protected $_cache_where1=[];
 	
+	//экземпдяр парсера SQL 
+	protected $Parser;
+	
 	public function __construct ()
 	{
 		$this->PageCount = 0;
@@ -1088,9 +1091,9 @@ if ($Start) {$this->Move( $SkipRows,  $Start);} // перейти  к  закл�
 			 
 			if (!array_key_exists($md5_criteria,$this->_cache_where1))
 				{
-					$Parser=new Parser();
-					$struct=$Parser->parse($Criteria);
-					$this->_cache_where1[$md5_criteria]=$Parser->create($struct);
+					$this->Parser=new Parser();
+					$struct=$this->Parser->parse($Criteria);
+					$this->_cache_where1[$md5_criteria]=$this->Parser->create($struct);
 				}
 			$s=$this->_cache_where1[$md5_criteria];
 			 
@@ -1338,9 +1341,9 @@ if (count(  $this->temp_rez_array['filter']) &&! $this->container['filter'])
 			$h=md5($this->container['filter']);
 			if (!array_key_exists($h,$this->_cache_where))
 				{
-					$Parser=new Parser();
-					$struct=$Parser->parse($this->container['filter']);
-					$this->_cache_where[$h]=$Parser->create($struct);
+					$this->Parser=new Parser();
+					$struct=$this->Parser->parse($this->container['filter']);
+					$this->_cache_where[$h]=$this->Parser->create($struct);
 				}
 			$s=$this->_cache_where[$h];
 			foreach ($this->rez_array as $rez_array) 
@@ -1574,6 +1577,7 @@ function __clone()
 		$this->container['source'] =clone $this->container['source'];
 		//$this->stmt=clone $this->stmt;
 		$this->DataColumns=clone $this->DataColumns;
+		//if ($this->Parser) {$this->Parser=clone $this->Parser;}
     }
 
 

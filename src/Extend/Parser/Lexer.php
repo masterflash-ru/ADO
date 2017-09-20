@@ -346,10 +346,13 @@ class Lexer
                     } else {
                         $this->tokText = intval($val);
                     }
-                    $this->skipText = substr($this->string, $this->tokAbsStart,
-                            $this->tokStart-$this->tokAbsStart);
+                    $this->skipText = substr($this->string, $this->tokAbsStart,$this->tokStart-$this->tokAbsStart);
                     $this->tokStart = $this->tokPtr;
-                    if ($this->tokText == '-') {
+					
+					return 'int_val';
+                    //вообще не понятно для чего это условие, если аргумент=0, то возникает ошибка из-за этого!
+					//проблема с приведением типов, 0=='-' - равно true!
+					if ($this->tokText == '-') {
                         return $this->tokText;
                     } else {
                         return 'int_val';
