@@ -69,6 +69,7 @@ public function Execute (&$RecordsAffected = 0, &$Parameters = NULL,   $Options 
 			$this->ActiveConnection->Open(); // открыть соединение
 		}
 		$this->ActiveConnection->driver->NamedParameters = $this->NamedParameters; // флаг передачи параметров по номерам или по именам
+		
 																				   
 		// проверим, парсили ли мы запрос или нет
 		if (count($this->sql_item) < 1) 

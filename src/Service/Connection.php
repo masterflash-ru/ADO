@@ -9,12 +9,13 @@ use ADO\Exception\ADOException;
 /*
 конструктор генерации объекта Connection ADO
 
+24.09.2017 - добавлены методы BeginTrans() CommitTrans() RollbackTrans() - вызывают соответсвующие методы PDO
 
- 14.02.2014 - добавлен метод get_last_insert_id() - вызывающий одноименный в драйвере, возвращает ID вставленой записи
+14.02.2014 - добавлен метод get_last_insert_id() - вызывающий одноименный в драйвере, возвращает ID вставленой записи
 */
 class Connection
 { // объект cоnnection - содинение к базе данных текущего провайдера
-	public $version = "1.01";
+	public $version = "1.02";
 
 	public $ConnectionString; // Возвращает или задает строку, используемую для открытия базы данных.
 	public $Database; // Получает имя текущей базы данных или базы данных,которая будет использоваться после открытия подключения.
@@ -282,7 +283,22 @@ public function Close ()
 		return $dsna;
 	
 	}
-	
+
+public function BeginTrans() 
+{
+	$this->connect_link->beginTransaction();
+}
+public function CommitTrans() 
+{
+	$this->connect_link->commit();
+}
+public function functionRollbackTrans()
+{
+	$this->connect_link->rollBack();
+}
+
+
+
 	// ************************** перегрузка
 	public function &__get ($var)
 	{
