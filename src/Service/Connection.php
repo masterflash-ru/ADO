@@ -171,7 +171,6 @@ public function Execute ($CommandText, &$RecordsAffected = 0, $Options = adCmdTe
 																										 )); // генерировать событие ExecuteComplete
 				throw new ADOException($this); // вызвать исключение
 			}
-	
 		$RecordsAffected = $rez['RecordsAffected'];
 		// if (!$flag_for_Execute) {$flag_for_Execute=true;return
 		// $rez;}//результат выборки должен получить Execute объекта command

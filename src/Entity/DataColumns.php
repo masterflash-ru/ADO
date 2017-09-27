@@ -4,8 +4,10 @@
 */
 
 namespace ADO\Entity;
+use ArrayIterator;
+use IteratorAggregate;
 
-class DataColumns implements \IteratorAggregate // Iterator
+class DataColumns implements IteratorAggregate // Iterator
 { // объект для генерации коллекций
  	
  	public $count = 0; // кол-во элементов

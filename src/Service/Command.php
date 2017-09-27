@@ -70,7 +70,7 @@ public function Execute (&$RecordsAffected = 0, &$Parameters = NULL,   $Options 
 		}
 		$this->ActiveConnection->driver->NamedParameters = $this->NamedParameters; // флаг передачи параметров по номерам или по именам
 		
-																				   
+						
 		// проверим, парсили ли мы запрос или нет
 		if (count($this->sql_item) < 1) 
 				{ // нет, парсим
@@ -96,10 +96,9 @@ public function Execute (&$RecordsAffected = 0, &$Parameters = NULL,   $Options 
 			}
 		$RecordsAffected=0;
 		// ПРОВЕРИМ СЛУЧАЙ, когда передан пустой запрос
-		if (empty($this->sql_item)) 	$this->sql_item[$this->index_in_sql_query] = "";
-		//echo "<br>SQL_ITEM:".$this->sql_item[$this->index_in_sql_query];
+		if (empty($this->sql_item)) 	{$this->sql_item[$this->index_in_sql_query] = "";}
 		$rez = $this->ActiveConnection->Execute($this->sql_item[$this->index_in_sql_query], $RecordsAffected, $Options, $Parameters_);
-		if (count($this->sql_item) > $this->index_in_sql_query + 1)		$this->index_in_sql_query ++; // переместиться к след. запросу, если есть
+		if (count($this->sql_item) > $this->index_in_sql_query + 1)	{$this->index_in_sql_query ++;} // переместиться к след. запросу, если есть
 		return $rez;
 	}
 
