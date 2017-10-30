@@ -1108,7 +1108,7 @@ if ($Start) {$this->Move( $SkipRows,  $Start);} // перейти  к  закл�
 										$rez_array = array_combine($field_name, $arr_item); // сделать  массив что  бы ключи были  не  числовые а  имена полей,  и  преобразовать  в  переменные
 										extract($rez_array);
 										
-										if (eval($s))
+										if (eval($s.';'))
 											 {
 												 $this->Finding_record = $this->container['absoluteposition'];
 												 return;
@@ -1352,7 +1352,7 @@ if (count(  $this->temp_rez_array['filter']) &&! $this->container['filter'])
 					unset($rez_array_['status']); // удалим служебные флаги
 					$rez_array_ = array_combine($this->get_field_name_false, $rez_array_); // сделать  массив что бы ключи были не числовые а имена полей, и преобразовать в переменные
 					extract($rez_array_);
-					if (eval($s)) {$rez[]=$rez_array;}
+					if (eval($s.';')) {$rez[]=$rez_array;}
 				}
 				$this->rez_array= $rez;
 		 }
