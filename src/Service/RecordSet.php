@@ -1095,7 +1095,7 @@ if ($Start) {$this->Move( $SkipRows,  $Start);} // перейти  к  закл�
 					$struct=$this->Parser->parse($Criteria);
 					$this->_cache_where1[$md5_criteria]=$this->Parser->create($struct);
 				}
-			$s=$this->_cache_where1[$md5_criteria];
+			$___s___=$this->_cache_where1[$md5_criteria];
 			 
 			 if ($SearchDirection == adSearchForward) 
 			 			{
@@ -1107,8 +1107,7 @@ if ($Start) {$this->Move( $SkipRows,  $Start);} // перейти  к  закл�
 										unset($arr_item['status']); // удалим служебную информацию
 										$rez_array = array_combine($field_name, $arr_item); // сделать  массив что  бы ключи были  не  числовые а  имена полей,  и  преобразовать  в  переменные
 										extract($rez_array);
-										
-										if (eval($s.';'))
+										if (eval($___s___.';'))
 											 {
 												 $this->Finding_record = $this->container['absoluteposition'];
 												 return;
@@ -1345,14 +1344,14 @@ if (count(  $this->temp_rez_array['filter']) &&! $this->container['filter'])
 					$struct=$this->Parser->parse($this->container['filter']);
 					$this->_cache_where[$h]=$this->Parser->create($struct);
 				}
-			$s=$this->_cache_where[$h];
+			$___s___=$this->_cache_where[$h];
 			foreach ($this->rez_array as $rez_array) 
 				{
 					$rez_array_ = $rez_array;
 					unset($rez_array_['status']); // удалим служебные флаги
 					$rez_array_ = array_combine($this->get_field_name_false, $rez_array_); // сделать  массив что бы ключи были не числовые а имена полей, и преобразовать в переменные
 					extract($rez_array_);
-					if (eval($s.';')) {$rez[]=$rez_array;}
+					if (eval($___s___.';')) {$rez[]=$rez_array;}
 				}
 				$this->rez_array= $rez;
 		 }
