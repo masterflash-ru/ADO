@@ -291,7 +291,7 @@ public function CommitTrans()
 {
 	$this->connect_link->commit();
 }
-public function functionRollbackTrans()
+public function RollbackTrans()
 {
 	$this->connect_link->rollBack();
 }
