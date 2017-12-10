@@ -503,14 +503,14 @@ if (is_object ( $parameters ))
 			{
 				foreach ( $parameters as $k => &$v ) 
 						{ // нумерация начинается с 1, поправим индекс +1
-						$stmt->bindParam ( ":" . $v->Name, $v->Value, $this->data_type [$v->Type] or $this->Direction, $v->Size );
+						$stmt->bindParam ( ":" . $v->Name, $v->Value, $this->data_type [$v->Type], $v->Size );
 						}
 			}
 			else
 				{
 					foreach ( $parameters as $k => $v ) 
 						{ // нумерация начинается с 1, поправим индекс +1
-							$stmt->bindParam ( $k + 1, $v->Value, $this->data_type [$v->Type] or $this->Direction, $v->Size );
+							$stmt->bindParam ( $k + 1, $v->Value, $this->data_type [$v->Type], $v->Size );
 						}
 				}
 		}
