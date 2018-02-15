@@ -13,7 +13,7 @@ class Rs extends ClassMethods
 
     public function __construct()
     {
-        parent::__construct(false);
+        parent::__construct(false,false);
     }
 
 
