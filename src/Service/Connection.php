@@ -270,12 +270,14 @@ public function Close ()
 		$dsna = array();
 		$at = strpos($db, '://');
 		
-		$dsna = @parse_url('fake' . substr($db, $at));//print_r($dsna);
+		$dsna = @parse_url('fake' . substr($db, $at));
 		$dsna['scheme'] = substr($db, 0, $at);
-		$dsna['host'] = isset($dsna['host']) ? rawurldecode($dsna['host']) : '';
+		$dsna['host'] = isset($dsna['host']) ? $dsna['host'] : null;
+        $dsna['port'] = isset($dsna['port']) ? $dsna['port'] : null;
+        $dsna['unix_socket'] = isset($dsna['fragment']) ? $dsna['fragment'] : null;
 		$dsna['user'] = isset($dsna['user']) ? rawurldecode($dsna['user']) : '';
 		$dsna['pass'] = isset($dsna['pass']) ? rawurldecode($dsna['pass']) : '';
-		$dsna['path'] = isset($dsna['path']) ? rawurldecode(	substr($dsna['path'], 1)) : ''; // strip off initial /
+		$dsna['path'] = isset($dsna['path']) ? rawurldecode(substr($dsna['path'], 1)) : '';
 		$dsna['query'] = isset($dsna['query']) ? rawurldecode($dsna['query']) : '';
 		$this->DefaultDatabase = $dsna['path']; // текущая база данных
 		$this->Database = $dsna['path'];
