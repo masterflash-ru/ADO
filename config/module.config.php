@@ -4,13 +4,18 @@ ADO
  */
 
 namespace ADO;
+use ADO\Service\Connection;
 
 return [
 'service_manager' => [
         'factories' => [
-            "ADO\Connection" => Service\Factory\ConnectionFactory::class,
+            Connection::class => Service\Factory\ConnectionFactory::class,
         ],
-		
+        'aliases' => [
+            "ADOConnection" => Connection::class,
+            "ADO\Connection" => Connection::class,
+            "ADOdb"=> Connection::class,
+        ],
     ],
 
 ];
