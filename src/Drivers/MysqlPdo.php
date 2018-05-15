@@ -429,6 +429,10 @@ public function loadColumnMeta($stmt, $col)
         $hash=spl_object_hash($stmt);
         //проверяем типы колонок и устанавливаем данные в соотвествии с этим типом
         foreach ($rez as $col=>$value){
+            if (is_null($rez[$col])) {
+                continue;
+            }
+
             if (!isset($this->cache_meta_data[$hash][$col])) {
                 $this->loadColumnMeta($stmt, $col);
             }
