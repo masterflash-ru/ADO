@@ -479,7 +479,7 @@ class RecordSet
 										 { // да,  была  модификация,  сохраним  во  временный  файл
 											$file_name = md5($i . microtime()); // имя временного файла
 											if (empty($this->old_rez_array[$i])) {$this->old_rez_array[$i] =$this->rez_array[$i];}//на всякий случай
-											file_put_contents(sys_get_temp_dir() . $file_name,  serialize( array($this->old_rez_array[$i], $this->rez_array[$i])));
+											file_put_contents(sys_get_temp_dir() ."/". $file_name,  serialize( array($this->old_rez_array[$i], $this->rez_array[$i])));
 											// индекс формируется номер_записи + номер_записи_в_начале_буфера -1
 											$_SESSION['ADORecordSet'][$this->RecordSetId][$i + $this->AbsolutePosition_min_max[0] - 1] = $file_name;
 										}
