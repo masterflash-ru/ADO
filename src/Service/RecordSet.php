@@ -1711,7 +1711,7 @@ public function __destruct ()
 		{
 			foreach ($_SESSION['ADORecordSet'][$this->RecordSetId] as $f) 
 				{
-					unlink(sys_get_temp_dir() . $f);/*echo sys_get_temp_dir().$f.' ' ;*/
+					unlink(sys_get_temp_dir() ."/". $f);/*echo sys_get_temp_dir().$f.' ' ;*/
 				}
 		}
 	unset($_SESSION['ADORecordSet'][$this->RecordSetId]);
