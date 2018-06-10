@@ -593,7 +593,7 @@ class RecordSet
 									if (count( array_intersect( array('flag_change', 'flag_new',  'flag_delete', 'preserveptatus'), array_keys( $this->rez_array[$i]['status'],  true))) > 0) 
 										{ // да,  была  модификация,  сохраним  во  временный  файл
 											$file_name = md5($i . microtime()); // имя временного  файла
-											file_put_contents(sys_get_temp_dir() . $file_name,  serialize( array($this->old_rez_array[$i], $this->rez_array[$i])));
+											file_put_contents(sys_get_temp_dir() ."/". $file_name,  serialize( array($this->old_rez_array[$i], $this->rez_array[$i])));
 											// echo '-';
 											$_SESSION['ADORecordSet'][$this->RecordSetId][$i +  $this->AbsolutePosition_min_max[0] - 1] = $file_name;
 										}
@@ -607,10 +607,10 @@ class RecordSet
 									// есть, грузим из этого файла, иначе из БД
 								if (isset($_SESSION['ADORecordSet'][$this->RecordSetId][$i + $NewAbsolutePosition - 1]))
 										 { // имеется, грузим ее
-										$a = unserialize(file_get_contents(sys_get_temp_dir() . $_SESSION['ADORecordSet'][$this->RecordSetId][$i + $NewAbsolutePosition - 1]));
+										$a = unserialize(file_get_contents(sys_get_temp_dir() ."/". $_SESSION['ADORecordSet'][$this->RecordSetId][$i + $NewAbsolutePosition - 1]));
 										$rez_array[$i] = $a[1];
 										$this->old_rez_array[$i] = $a[0];
-										unlink( sys_get_temp_dir() . $_SESSION['ADORecordSet'][$this->RecordSetId][$i + $NewAbsolutePosition - 1]);
+										unlink( sys_get_temp_dir() ."/". $_SESSION['ADORecordSet'][$this->RecordSetId][$i + $NewAbsolutePosition - 1]);
 										// удалим ссылку на этот файл из сесии
 										unset( $_SESSION['ADORecordSet'][$this->RecordSetId][$i + $NewAbsolutePosition - 1]);
 										 }
@@ -893,7 +893,7 @@ class RecordSet
 									// print_r($_SESSION['ADORecordSet'][$this->RecordSetId] // );
 									 foreach ($_SESSION['ADORecordSet'][$this->RecordSetId] as $k => $f) 
 									 				{
-														$a = unserialize( file_get_contents(sys_get_temp_dir() . $f));
+														$a = unserialize( file_get_contents(sys_get_temp_dir() ."/". $f));
 														$rez_array = $a[1];
 														$old = $a[0];  // если статус записи нужно сохранить, тогда мы не удаляем временную запись!
 													if ($PreserveStatus)
@@ -904,7 +904,7 @@ class RecordSet
 																 }
 															 else 
 															 		{ // обычная  обработка,  просто  удвалим  запись,  т.к.  уже  сохранили  в  базу
-																		unlink(sys_get_temp_dir() . $_SESSION['ADORecordSet'][$this->RecordSetId][$k]); //удалим ссылку на этот файл из сесии
+																		unlink(sys_get_temp_dir() ."/". $_SESSION['ADORecordSet'][$this->RecordSetId][$k]); //удалим ссылку на этот файл из сесии
 																		unset( $_SESSION['ADORecordSet'][$this->RecordSetId][$k]);
 																	}
 		 
