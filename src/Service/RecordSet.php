@@ -1,6 +1,9 @@
 <?php
 // ----------------------------------- RecordSet
 /*
+
+4.12.18 - RecordSet стал реализовывать интерфейс Iterator, т.е. можно перебирать записи в цикле forech($rs as $k=>$rs_item)
+
 9.8.17 - удалена FilterFind библиотека, ее место занял SQL_parser от PEAR (упрощенный), из-за простоты работы все встроено в RS
 
 
@@ -51,12 +54,12 @@ use ADO\Extend\Parser;
 use ADO\Extend\AdoXml;
 use ADO\Exception\ADOException;
 use ADO\Service\Command;
-use \stdClass;
-
+use stdClass;
+use Iterator;
 use ADO\Entity\EntityRepository;
 
 
-class RecordSet
+class RecordSet implements Iterator
 {
 	/*
 	 * объект работы с данными непосредственно
@@ -1707,15 +1710,31 @@ if (isset($this->rez_array[$this->container['absoluteposition'] - $this->Absolut
 
 public function __destruct ()
 {
-	if (isset($_SESSION['ADORecordSet'][$this->RecordSetId]) &&   is_array( $_SESSION['ADORecordSet'][$this->RecordSetId])) 
-		{
-			foreach ($_SESSION['ADORecordSet'][$this->RecordSetId] as $f) 
-				{
-					unlink(sys_get_temp_dir() ."/". $f);/*echo sys_get_temp_dir().$f.' ' ;*/
-				}
-		}
-	unset($_SESSION['ADORecordSet'][$this->RecordSetId]);
+    if (isset($_SESSION['ADORecordSet'][$this->RecordSetId]) &&   is_array( $_SESSION['ADORecordSet'][$this->RecordSetId])) {
+        foreach ($_SESSION['ADORecordSet'][$this->RecordSetId] as $f) {
+            unlink(sys_get_temp_dir() ."/". $f);
+        }
+    }
+    unset($_SESSION['ADORecordSet'][$this->RecordSetId]);
 }
 
+    public function rewind() {
+        $this->MoveFirst();
+    }
 
+    public function current() {
+        return $this;
+    }
+
+    public function key() {
+        return $this->AbsolutePosition-1;
+    }
+
+    public function next() {
+        $this->MoveNext();
+    }
+
+    public function valid() {
+        return !$this->EOF;
+    }
 }

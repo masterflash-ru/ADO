@@ -1,13 +1,18 @@
 <?php
 /**
-ADO
- */
+* ADO
+*/
 
 namespace ADO;
 use ADO\Service\Connection;
 
 return [
-'service_manager' => [
+    'service_manager' => [
+        'abstract_factories' => [
+            Service\ConnectionAbstractServiceFactory::class,
+        ],
+        
+        /*оставлено для совместимости старых конфигураций*/
         'factories' => [
             Connection::class => Service\Factory\ConnectionFactory::class,
         ],
@@ -17,5 +22,4 @@ return [
             "ADOdb"=> Connection::class,
         ],
     ],
-
 ];

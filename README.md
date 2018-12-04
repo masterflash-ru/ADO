@@ -25,7 +25,7 @@ ADO\Service\Connection
 ```php
 $rs=new RecordSet();
 $rs->CursorType = adOpenKeyset;
-$rs->Open("select * from Admins",$this->connection);
+$rs->Open("select * from admins",$this->connection);
 
 //получаем массив заполненых сущностей
 $user = $rs->FetchEntityAll(Admins::class);
@@ -36,4 +36,31 @@ $user = $rs->FetchEntity(Admins::class);
 для записи данных из сущности в базу:
 $rs->persist(Объект_сущности);
 ```
+Заполненый RecordSet можно перебирать циклом foreach
+
+Пакет использует соединение с базой данных из конфигурации приложения:
+```php
+
+    "databases"=>[
+        //соединение с базой + имя драйвера
+        'DefaultSystemDb' => [
+            'driver'=>'MysqlPdo',
+            /*можно сделать соединерние через юникс сокет*/
+            //"unix_socket"=>"/tmp/mysql.sock",
+            "host"=>"localhost",
+            'login'=>"root",
+            "password"=>"vfibyf",
+            "database"=>"simba4",
+            "locale"=>"ru_RU",
+            "character"=>"utf8"
+        ],
+    ],
+```
+Для работы в фабриках вашего приложения используйте:
+```php
+$connection=$container->get('DefaultSystemDb');
+```
+где DefaultSystemDb - это имя соединения с базой в конфигурационном файле
+
+
 

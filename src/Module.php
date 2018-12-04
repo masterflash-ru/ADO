@@ -133,39 +133,8 @@ public function getConfig()
 	define("adEditInProgress",1);	//редактирвоание проводилось, но изменения не сохранены
 	define("adEditAdd",2);	//текущая запись была добавлена методом AddNew
 	define("adEditDelete",4);	//текущая запись была удалена
-		
+
+        define("ADO_LOCALE","ru_RU");
     }
-
-
-
-public function onBootstrap(MvcEvent $e)
-{
-	$sm = $e->getApplication()->getServiceManager();
-	$config=$sm->get('config');
-	define("ADO_LOCALE",$config["db"]["locale"]);
-
-
-
-}
-/*позволяет настраивать ServiceManager и эквивалентен 
-ключу массива config в разделе service_manager в module.config.php.* /
-public function getServiceConfig()
-{
-}*/
-
-/*позволяет настраивать ControllerLoader и эквивалентен ключу массива config в разделе controllers в module.config.php* /
-public function getControllerConfig()
-{
-}*/
-
-
-/*позволяет настраивать ControllerPluginManager и эквивалентен ключу массива config в разделе controller_plugins в module.config.php.* 
-public function getControllerPluginConfig()
-{}*/
-
-/*позволяет настраивать ViewHelperManager и эквивалентен ключу массива config в разделе view_helpers в module.config.php.* /
-public function getViewHelperConfig()
-{}*/
-
 
 }
