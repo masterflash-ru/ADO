@@ -257,7 +257,7 @@ protected function parseCondition()
                 case 'and':
                 case 'or':
                     $clause['ops'][] = $not . $op;
-                    continue;
+                    continue 2;
                     break;
                 default:
                    // $clause['ops'][] = $not . $op;
