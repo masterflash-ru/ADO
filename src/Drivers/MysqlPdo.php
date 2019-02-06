@@ -15,7 +15,7 @@ class MysqlPdo extends AbstractPdo
     {
         //проверим наличие драйвера PDO в системе
         if (!in_array("pdo_mysql",get_loaded_extensions ())){
-            throw new ADOException(NULL,18,'driver',array('PDO_MYSQL'));
+            throw new ADOException(null,18,'driver',array('PDO_MYSQL'));
         }
         parent::__construct();
     }
@@ -32,14 +32,14 @@ class MysqlPdo extends AbstractPdo
 	  			 'values' => $v,				- то что вставляется в иструкцию insert, сами значения
 				  'type' => 'insert',		-сама операция (insert update delete)
 				   'sql1' => $sql_start 	- начальная инструкция при добавлении, пример, "insert into (....) values (.....)"  (актуально если мы вставляем массово записи в одной инструкции insert - это не стандартная реализация)
-				  'primary_key_number_field' - номер поля с первичным ключем, если ключа нет - NULL (нужно что бы RS получил последний ID записи и внес свое поле с этим ключем)
+				  'primary_key_number_field' - номер поля с первичным ключем, если ключа нет - null (нужно что бы RS получил последний ID записи и внес свое поле с этим ключем)
 				   );
 */
     public function create_sql_update($connect_link,$stmt, array $old_value_array = [], array $new_value_array = [], array $status =['flag_change'=>false,'flag_new'=>false,'flag_delete'=>false]) 
     { 
         if ($status ['flag_new']) { // создание новой записи - ассоциированый массив
             $s1 = [];
-            $primary_key_number_field=NULL;
+            $primary_key_number_field=null;
             $i=0;
             foreach ( $new_value_array as $k => $v ){
                 //получить описание полей и проверить на primary_key
@@ -85,7 +85,9 @@ class MysqlPdo extends AbstractPdo
                 }
                 $s1 = [];
                 foreach ( $new_value_array as $k => $v ){
+                    if ($v!=$old_value_array[$k]){
                         $s1 [] = '`'.$k . "`=" . $this->quote($v,$ColumnMeta[$k],$connect_link);
+                    }
                 }
             } else { // первичного ключа нет
                 $s = [];
@@ -94,12 +96,13 @@ class MysqlPdo extends AbstractPdo
                 }
                 $s1 = [];
                 foreach ( $new_value_array as $k => $v ){
+                    if ($v!=$old_value_array[$k]){
                         $s1 [] ='`'. $k . "`=" . $this->quote($v,$ColumnMeta[$k],$connect_link);
+                    }
                 }
             }
             $sql = "update `" . $ColumnMetaItem ['table'] . "` set " . implode ( ',', $s1 ) . " where " . implode ( ' and ', $s );
-            $v = NULL;
-            return array ('sql' => $sql, 'values' => $v, 'type' => 'update', 'sql1' => NULL,'primary_key_number_field'=>NULL );
+            return array ('sql' => $sql, 'values' => null, 'type' => 'update', 'sql1' => null,'primary_key_number_field'=>null );
         }
         
         if ($status ['flag_delete']) {
@@ -130,8 +133,8 @@ class MysqlPdo extends AbstractPdo
                 }
             }
             $sql = "delete from `" . $ColumnMetaItem ['table'] . "` where " . implode ( ' and ', $s );
-            $v = NULL;
-            return array ('sql' => $sql, 'values' => $v, 'type' => 'delete', 'sql1' => NULL ,'primary_key_number_field'=>NULL );
+            $v = null;
+            return array ('sql' => $sql, 'values' => $v, 'type' => 'delete', 'sql1' => null ,'primary_key_number_field'=>null );
         }
         
     }

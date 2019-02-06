@@ -1,6 +1,7 @@
 <?php
 // ----------------------------------- RecordSet
 /*
+6.2.19 - при обновлении в записи проверяется изменение знаком ==, т.е. не строго, преобразование типов перенесено в объект Field 
 
 4.12.18 - RecordSet стал реализовывать интерфейс Iterator, т.е. можно перебирать записи в цикле forech($rs as $k=>$rs_item)
 
@@ -1529,7 +1530,9 @@ return $field_name;
 
 private function change_value (Field $field_obj)
 { // вызывается  когда  меняем  сво-во  Value  в  объекте  Field,  на  входе  экземпляр  объекта  Field
- if ($this->container['cursortype'] == adOpenForwardOnly)throw new ADOException( $this->ActiveConnect, 5, 'RecordSet:' . $this->RecordSetName);
+ if ($this->container['cursortype'] == adOpenForwardOnly) {
+     throw new ADOException( $this->ActiveConnect, 5, 'RecordSet:' . $this->RecordSetName);
+ }
 $number = $this->get_field_name_true; // получить имена
 
 // получить  ключ  в  массиве  $this->rez_array  который  будем  модифицировать  сохраним  старое  значение,  что  бы  можно  было  
@@ -1537,10 +1540,9 @@ $number = $this->get_field_name_true; // получить имена
 $key = $number[$field_obj->Name]; 
 
 //проверим, если новое значение отлично от старого, тогда меняем, если тоже самое, тогда нет! 
-if ($field_obj->Value ===$this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]][$key]) {return;}
+if ($field_obj->Value ==$this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]][$key]) {return;}
 
-
-if (! isset($this->old_rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]]))
+    if (! isset($this->old_rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]]))
 					  $this->old_rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]] = $this->rez_array[$this->container['absoluteposition'] -
 					   $this->AbsolutePosition_min_max[0]];
 
@@ -1550,8 +1552,9 @@ $field_obj->OriginalValue = $this->rez_array[$this->container['absoluteposition'
 
 $this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]][$key] = $field_obj->Value; 
 // присвоить  новое  значение  изменим  статус  записи  на  "модифицированная"  только  в  том  случае,  если  это  не  новая  запись
- if (! $this->rez_array[$this->container['absoluteposition'] -  $this->AbsolutePosition_min_max[0]]['status']['flag_new'])
-									  $this->rez_array[$this->container['absoluteposition'] -  $this->AbsolutePosition_min_max[0]]['status']['flag_change'] = true;
+ if (! $this->rez_array[$this->container['absoluteposition'] -  $this->AbsolutePosition_min_max[0]]['status']['flag_new']){
+      $this->rez_array[$this->container['absoluteposition'] -  $this->AbsolutePosition_min_max[0]]['status']['flag_change'] = true;
+ }
 }
 
 private function set_status ()

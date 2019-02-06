@@ -301,28 +301,6 @@ public function loadColumnMeta($stmt, $col)
             if (is_null($rez[$col])) {
                 continue;
             }
-            $meta=$this->loadColumnMeta($stmt, $col);
-            
-			switch ($meta["Type"]){
-                case adSmallInt:
-                case adInteger:
-                case adTinyInt:
-                case adUnsignedTinyInt:
-                case adUnsignedSmallInt:
-                case adUnsignedInt:
-                case adBigInt:
-                case adUnsignedBigInt: {
-                    $rez[$col]=(int)$rez[$col];
-                    break;
-                }
-                case adSingle:
-                case adDouble:
-                case adCurrency:
-                case adDecimal:{
-                    $rez[$col]=(float)$rez[$col];
-                    break;
-                }
-            }
         }
         $stmt->_row_number ++;
         return $rez;
