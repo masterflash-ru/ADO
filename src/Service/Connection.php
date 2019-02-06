@@ -190,10 +190,16 @@ public function Execute ($CommandText, &$RecordsAffected = 0, $Options = adCmdTe
 		// return $rs;//вернуть объект RS
 }
 
+public function create_sql_update($stmt, array $old_value_array = [], array $new_value_array = [], array $status =['flag_change'=>false,'flag_new'=>false,'flag_delete'=>false]) 
+{ 
+    return $this->driver->create_sql_update($this->connect_link,$stmt, $old_value_array, $new_value_array, $status);
+}
 
+/**
+* получить ID последней вставленой записи
+*/
 public function get_last_insert_id()
 {
-	//получить ID последней вставленой записи
 	return  $this->driver->get_last_insert_id($this->connect_link);	//вызываем одноименную функцию в драйвере
 }
 

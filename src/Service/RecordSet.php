@@ -736,7 +736,7 @@ class RecordSet implements Iterator
    unset($old['status']);
  
 
- $sql = $this->container['source']->ActiveConnection->driver->create_sql_update(
+ $sql = $this->container['source']->ActiveConnection->create_sql_update(
  																							 $this->stmt, array_combine( $this->get_field_name_false, $old), 
 																								array_combine( $this->get_field_name_false, $new), $status); // сгенерировать
  $RecordsAffected = 0;
@@ -873,7 +873,7 @@ class RecordSet implements Iterator
 										unset($old['status']);
 										$new = array_combine($this->get_field_name_false, $new);
 										$old = array_combine( $this->get_field_name_false, $old);
-										$sql_s[] = $this->container['source']->ActiveConnection->driver->create_sql_update($this->stmt,  $old, $new,  $status); // сгенерировать  sql  для  update  $values[]=trim($sql[1]);
+										$sql_s[] = $this->container['source']->ActiveConnection->create_sql_update($this->stmt,  $old, $new,  $status); // сгенерировать  sql  для  update  $values[]=trim($sql[1]);
 									} // просмотрим все на предмет удаления
 							 if (($rez_array['status']['flag_delete']) && ! $rez_array['status']['flag_canceled'] &&  ! $rez_array['status']['flag_new']) 
 							 				{
@@ -887,7 +887,7 @@ class RecordSet implements Iterator
 												$new = array_combine( $this->get_field_name_false,   $new);
 												 // $old=array_combine($this->get_field_name_false,  $old);
 												
-												 $sql_s[] = $this->container['source']->ActiveConnection->driver->create_sql_update($this->stmt, $new,  $new, $status); // сгенерировать  sql  для  update  $values[]=trim($sql[1]);
+												 $sql_s[] = $this->container['source']->ActiveConnection->create_sql_update($this->stmt, $new,  $new, $status); // сгенерировать  sql  для  update  $values[]=trim($sql[1]);
 												}
  
    	 				// теперь просматриваем временные файлы, в них хранятся только модифицированные записи, сразу стираем их и ссылки в сессии
@@ -920,7 +920,7 @@ class RecordSet implements Iterator
 													unset($old['status']);
 													$new = array_combine($this->get_field_name_false, $new);
 													$old = array_combine($this->get_field_name_false, $old);
-													$sql_s[] = $this->container['source']->ActiveConnection->driver->create_sql_update(
+													$sql_s[] = $this->container['source']->ActiveConnection->create_sql_update(
 																																				$this->stmt, 
 																																				$old, 
 																																				$new, 
