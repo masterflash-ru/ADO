@@ -1540,7 +1540,7 @@ $number = $this->get_field_name_true; // получить имена
 $key = $number[$field_obj->Name]; 
 
 //проверим, если новое значение отлично от старого, тогда меняем, если тоже самое, тогда нет! 
-if ($field_obj->Value ==$this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]][$key]) {return;}
+if ($field_obj->Value ===$this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]][$key]) {return;}
 
     if (! isset($this->old_rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]]))
 					  $this->old_rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]] = $this->rez_array[$this->container['absoluteposition'] -

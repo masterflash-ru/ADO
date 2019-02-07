@@ -85,7 +85,7 @@ class MysqlPdo extends AbstractPdo
                 }
                 $s1 = [];
                 foreach ( $new_value_array as $k => $v ){
-                    if ($v!=$old_value_array[$k]){
+                    if ($v!==$old_value_array[$k]){
                         $s1 [] = '`'.$k . "`=" . $this->quote($v,$ColumnMeta[$k],$connect_link);
                     }
                 }
@@ -96,7 +96,7 @@ class MysqlPdo extends AbstractPdo
                 }
                 $s1 = [];
                 foreach ( $new_value_array as $k => $v ){
-                    if ($v!=$old_value_array[$k]){
+                    if ($v!==$old_value_array[$k]){
                         $s1 [] ='`'. $k . "`=" . $this->quote($v,$ColumnMeta[$k],$connect_link);
                     }
                 }

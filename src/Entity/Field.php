@@ -90,24 +90,26 @@ class Field
         
         if ($var == 'value') {
             /*преобразуем типы*/
-            switch ($this->container["type"]){
-                case adSmallInt:
-                case adInteger:
-                case adTinyInt:
-                case adUnsignedTinyInt:
-                case adUnsignedSmallInt:
-                case adUnsignedInt:
-                case adBigInt:
-                case adUnsignedBigInt: {
-                    $value=(int)$value;
-                    break;
-                }
-                case adSingle:
-                case adDouble:
-                case adCurrency:
-                case adDecimal:{
-                    $value=(float)$value;
-                    break;
+            if (!is_null($value)){
+                switch ($this->container["type"]){
+                    case adSmallInt:
+                    case adInteger:
+                    case adTinyInt:
+                    case adUnsignedTinyInt:
+                    case adUnsignedSmallInt:
+                    case adUnsignedInt:
+                    case adBigInt:
+                    case adUnsignedBigInt: {
+                        $value=(int)$value;
+                        break;
+                    }
+                    case adSingle:
+                    case adDouble:
+                    case adCurrency:
+                    case adDecimal:{
+                        $value=(float)$value;
+                        break;
+                    }
                 }
             }
  	 	$this->container[$var] = $value;
