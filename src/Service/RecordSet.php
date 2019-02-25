@@ -251,21 +251,24 @@ class RecordSet implements Iterator
 		$this->State = 1; // объект успешно открыт
 		
 		$RecordsAffected = 0;
-		if (is_null($this->container['source']))   return; // если мы просто  открыли без ничего, тогда  выход
+		if (is_null($this->container['source'])) {
+            return; // если мы просто  открыли без ничего, тогда  выход
+        }
 						
 		// выполним запрос к провайдеру
 		$Parameters = NULL;
-		if (is_null($Options))   $Options = adCmdText;
+		if (is_null($Options)) {
+            $Options = adCmdText;
+        }
 			// сделаем обращение в базу через объект command
 		
 		$a = $this->container['source']->Execute($RecordsAffected, $Parameters, $Options + adExecuteNoCreateRecordSet); // запрос  в  command,  а  он  вызывает  Execute  объекта  Command
 		$this->stmt = $a['stmt'];
 		
 		$this->RecordCount = $RecordsAffected; // кол-во записей
-		if ($RecordsAffected > 0)
-			 {
-			$this->EOF = false; // если записей >0 метку сонца поставить в false
-			}
+		if ($RecordsAffected > 0) {
+            $this->EOF = false; // если записей >0 метку сонца поставить в false
+        }
 		$this->Fields = new Fields(); // коллекция полей
 		$this->DataColumns = new DataColumns(); // коллекция полей кол-во колонок в результирущем наборе
 		$this->rez_array[0] = [];
@@ -309,8 +312,10 @@ class RecordSet implements Iterator
 		// срхраним массивы полей что бы не обращаться по многу раз
 		$this->get_field_name_true = $this->get_field_name(true);
 		$this->get_field_name_false = $this->get_field_name(false);
-		
-		if (empty($this->RecordCount)) $this->rez_array = []; // если нет записей, обнуляем буфер
+		$this->PageCount = ceil($this->RecordCount /  $this->container['pagesize']);
+		if (empty($this->RecordCount)) {
+            $this->rez_array = []; // если нет записей, обнуляем буфер
+        }
 	
 	}
 
