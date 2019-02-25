@@ -1,46 +1,6 @@
 <?php
-// ----------------------------------- RecordSet
-/*
-6.2.19 - при обновлении в записи проверяется изменение знаком ==, т.е. не строго, преобразование типов перенесено в объект Field 
-
-4.12.18 - RecordSet стал реализовывать интерфейс Iterator, т.е. можно перебирать записи в цикле forech($rs as $k=>$rs_item)
-
-9.8.17 - удалена FilterFind библиотека, ее место занял SQL_parser от PEAR (упрощенный), из-за простоты работы все встроено в RS
-
-
-8.3.17 - исправлена функция Close - она кроме всего прочего вызывает одноименный метод в драйвере, нужна для освобождения буфера, например, после вызова процедуры в MySql
-8.3.17 - введены функции для работы с внешними сущностями, используя гидратацию, можно так же вносить изменения в базе. RS использует внешний объект для работы
-		с этими функциями 
-
-20.12.2016 - перешли на ZF3, используется сессия, но используется нативные функции сессии, связано с многомерным массивом, а ZF3 сессии видимо не поддерживают прямого
-			создания таких массивов, видимо нужно городить внешнее создание такого массива и потом уже запись в сессию ZF3 
-
-14.2.16 - отключено клонирование PDOStatement $this->stmt. В php7 это вызывает крах
-
-
-ОШИБКА! - при составном первичном ключе при записи в ключ тогоже значения генерируется INSERT в базу, должно быть UPDATE
-
-
-2.12.14 - исправлена ошибка генерации BookMark элмента при перемотке RS назад
-
-
-08.08.14 - исправлены ошибки связанные с граничными условиями буфера и обратной перемотки записей
-4.08.14 - введена проверка, если в поле заносится тоже самое значение, тогда поле не модифицируется и не ставится влаг изменения! это экономит и память и щадит обращения в базу
-
-19.06.14 - исправлена ошибка обработки удаления записи в буфере (без перечитывания буфера)
-14.06.14 - исправлена ошибка записи в RS ID новой записи
-
-6.05.14 - доработана выборка данных из драйвера - обрабатывается исключение, если данных невозможно получить
-
-14.02.2014 доработан Update - после вставки новой записи заполняется поле с первичным ключем равным ID вставленой записи (но флаг изменения записи не устанавливается!)
-	в записи добавлен флаг flag_deleting, true -запись физически удалена этим RS из базы, этот флаг заставляет перечитать буфер вновь при обращении к записям
-	ВНИМАНИЕ! пока буфер не обновился кол-во записей в базе так же считается по старому и не обновляется!
-
-
-03.04.2013
-введено клонирование объектов, теперь RS клониуется со всеми потрохами, кроме соединения с базой
-27.03.13 
-исправлена GetRows - теперь возвращает верную структуру массива, если даже записей нет
+/**
+* RecordSet
 */
 namespace ADO\Service;
 
@@ -1598,97 +1558,99 @@ public function __set ($var, $value)
 $var = strtolower($var);
 switch ($var) 
 	{
-	  case 'pagesize':
-						  {
-						 	$value = (int) $value; // расчитать  кол-во  страниц  при  указаном  кол-ве  записей
-							if ($value > 0) 
-								{
-									$this->container['pagesize'] = $value; // проверим на допустимость
-									$this->PageCount = ceil($this->RecordCount /  $this->container['pagesize']);
-									$this->container['absolutepage'] = floor( ($this->container['absoluteposition'] - 1) / $this->container['pagesize']) + 1; // пересчитать номер страницы  при  изменении размера страницы
-								}
-								break;
-							}
-	  case 'absolutepage':
-						  { // проверить верность на пределы вычислить положение указателя на новую запись, в соответсвии с данными номера страницы
-								if ($value <=  $this->PageCount &&   $value >   0) 
-										{
-											$this->container['absolutepage'] = $value;
-											$this->jmp_record( ($this->container['absolutepage'] -1) *$this->container['pagesize'] + 1); // считать первую запись в странице
-										}
-								  break;
-						  }
+	  case 'pagesize': {
+          $value = (int) $value; // расчитать  кол-во  страниц  при  указаном  кол-ве  записей
+          if ($value > 0) {
+              $this->container['pagesize'] = $value; // проверим на допустимость
+              $this->PageCount = ceil($this->RecordCount /  $this->container['pagesize']);
+              $this->container['absolutepage'] = floor( ($this->container['absoluteposition'] - 1) / $this->container['pagesize']) + 1; // пересчитать номер страницы  при  изменении размера страницы
+          }
+          break;
+      }
+	  case 'absolutepage': { // проверить верность на пределы вычислить положение указателя на новую запись, в соответсвии с данными номера страницы
+          if ($value <=  $this->PageCount &&   $value > 0) {
+              $this->container['absolutepage'] = $value;
+              
+          } elseif ($value > $this->PageCount && $value > 0){
+              $this->container['absolutepage']=$this->PageCount;
+          }
+          $this->jmp_record( ($this->container['absolutepage'] -1) * $this->container['pagesize'] + 1);
+          break;
+      }
 							  
-	  case 'absoluteposition':
-					  { // проверить  верность  на  пределы  вычислить  положение  указателя  на  новую  запись,  в  соответсвии  с  данными  номера  страницы
-									  if ($value <=  $this->RecordCount &&   $value >0) 
-									  		{
-												$this->jmp_record( $value); // считать первую запись в странице
-											  }
-							break;
-						}
+	  case 'absoluteposition': { // проверить  верность  на  пределы  вычислить  положение  указателя  на  новую  запись,  в  соответсвии  с  данными  номера  страницы
+          if ($value <=  $this->RecordCount &&   $value >0) {
+              $this->jmp_record( $value); // считать первую запись в странице
+          }
+          break;
+      }
 
-	  case 'filter':
-					  {
-							if (is_string($value)) $this->container['filter'] = trim( $value); // если это строка, удалим возможные пробелы
-									  else
-										  $this->container['filter'] = $value; // если это массив закладок, оставимкак есть
-							$this->RsFilter();
-						  break;
-					  } // фильтрация  рекордсета
-	  case 'maxrecords':
-					  {
-						  if ($this->State >  0) throw new ADOException( $this->ActiveConnect,  11,  'RecordSet:' .  $this->RecordSetName .  " [$var]",  array( $var)); 
-						  // если уже открыто, тогда выход установить объем кеша, но торлько в том случае, если курсор на стороне сервера if ($this->container['cursortype']!=adUseClient)
-							$this->container['maxrecords'] = $value; // установить объем кеша
-						  break;
-					  }
-	  case 'sort':
-				  { // фильтрация  рекордсета
-					  $this->container['sort'] = $value;
-					  $this->RsSort();
-					  break;
-				}
+	  case 'filter': {
+          if (is_string($value)) {
+              $this->container['filter'] = trim( $value); // если это строка, удалим возможные пробелы
+          } else {
+              $this->container['filter'] = $value; // если это массив закладок, оставимкак есть
+          }
+          $this->RsFilter();
+          break;
+      } // фильтрация  рекордсета
+	  case 'maxrecords': {
+          if ($this->State >  0) {
+              throw new ADOException( $this->ActiveConnect,  11,  'RecordSet:' .  $this->RecordSetName .  " [$var]",  array( $var));
+          }
+          // если уже открыто, тогда выход установить объем кеша, но торлько в том случае, если курсор на стороне сервера if ($this->container['cursortype']!=adUseClient)
+          $this->container['maxrecords'] = $value; // установить объем кеша
+          break;
+      }
+	  case 'sort': { // фильтрация  рекордсета
+          $this->container['sort'] = $value;
+          $this->RsSort();
+          break;
+      }
 
-	  case 'bookmark':
-			  {
-				  $this->container['bookmark'] = $value;
-				  $this->find_book_mark( $value); // попробуем найти
-				  break;
-			  } // фильтрация  рекордсета
+	  case 'bookmark': {
+          $this->container['bookmark'] = $value;
+          $this->find_book_mark( $value); // попробуем найти
+          break;
+      } // фильтрация  рекордсета
 
-	  case 'cursorlocation':
-			  {
-								if ($this->State ==  0)  $this->container['cursorlocation'] = $value; // менять эту переменную можно только при закрытом рекордсете
-							  if ($value == adUseClient)  $this->container['maxrecords'] = 0; // все записывать в память
-									  else $this->container['maxrecords'] = 10; // если на сервере все, тогда максимум 10 записей храним
-				  break;
-		  } // расположение данных на сервере/клиенте
+	  case 'cursorlocation': {
+          if ($this->State ==  0)  {
+              $this->container['cursorlocation'] = $value; // менять эту переменную можно только при закрытом рекордсете
+          }
+          if ($value == adUseClient) {
+              $this->container['maxrecords'] = 0; // все записывать в память
+          } else {
+              $this->container['maxrecords'] = 10; // если на сервере все, тогда максимум 10 записей храним
+          }
+          break;
+      } // расположение данных на сервере/клиенте
 
-	  case 'source':
-			  {
-				  if ($this->State ==  0)  $this->container['source'] = $value;
-			  break;
-			  }
+	  case 'source': {
+          if ($this->State ==  0) {
+              $this->container['source'] = $value;
+          }
+          break;
+      }
 
-	  case 'cursortype':
-			  {
-							if ($this->State == 0) $this->container['cursortype'] = $value; // менять эту переменную можно только при закрытом рекордсете
-									  else  throw new ADOException( $this->ActiveConnect,  11, 'RecordSet:' .$this->RecordSetName ." [$var]",  array($var));
-			  break;
-			  } // тип курсора
+	  case 'cursortype': {
+          if ($this->State == 0) {
+              $this->container['cursortype'] = $value; // менять эту переменную можно только при закрытом рекордсете
+          } else {
+              throw new ADOException( $this->ActiveConnect,  11, 'RecordSet:' .$this->RecordSetName ." [$var]",  array($var));
+          }
+          break;
+      } // тип курсора
 
-	  case 'locktype':
-			  {
-						if ($this->State == 0)  $this->container['locktype'] = $value; // менять эту переменную можно  только при  закрытом рекордсете
-									  else  throw new ADOException($this->ActiveConnect, 11, 'RecordSet:' .	$this->RecordSetName ." [$var]",    array($var));
-			  break;
-			  } // блокировки рекордсета
-	  
-	  
-	  
-	  
-	  }
+	  case 'locktype': {
+          if ($this->State == 0) {
+              $this->container['locktype'] = $value; // менять эту переменную можно  только при  закрытом рекордсете
+          } else {
+              throw new ADOException($this->ActiveConnect, 11, 'RecordSet:' .	$this->RecordSetName ." [$var]",    array($var));
+          }
+          break;
+      } // блокировки рекордсета
+  }
 }
 
 public function &__get ($var)
