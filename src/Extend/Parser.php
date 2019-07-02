@@ -52,8 +52,9 @@ class Parser
      * @var    array
      * @access public
      */
-protected $quotes = [];
-protected $_values=[];		//хранит имена переменных которые должны быть определены при eval строки
+    protected $quotes = [];
+    protected $_values=[];		//хранит имена переменных которые должны быть определены при eval строки
+    protected $_values_null=[]; //null имена переменных
 
 
 public function __construct($string = null)
@@ -309,15 +310,15 @@ protected function parseIdentifier()
 
 /*
 генерация строки для выполнения в eval
+* $field_name - массив имен колонок таблицы
 */
-public function create($struct)
+public function create($struct,$field_name)
 {
 	$r=$this->tree($struct);
 	$rez="";
-	foreach ($this->_values as $v)
-		{
-			$rez.= "if(!isset(\${$v})) {throw new Exception('Переменная ($v) в условии не определена');}\n";
-		}
+	foreach (array_diff($this->_values, $field_name) as $v){
+            $rez.= "throw new Exception('Переменная ($v) в условии не определена');\n";
+    }
 	return $rez." return ".$r.";";
 }
 
@@ -328,57 +329,51 @@ public function create($struct)
 */
 protected function tree($struct)
 {
-$rez='';
-$i=0;
-foreach ($struct["args"] as $item)
-	{
-		if (array_key_exists("args",$item))
-			{
-				//рекурския
-				$rez.=" (".$this->tree($item).") ".$struct['ops'][$i];$i++;
-			}
-		else
-			{
-				//связывающие логические операторы
-				if (isset($struct['ops'][$i])){$op=$struct['ops'][$i];}
-					else {$op="";}
-				$this->_values[]=$item['column'];
-				if ($item['type']=='text_val') 
-					{
-						switch ($item['operator'])
-							{
-								case "like":
-									$rez.=' (false!=preg_match("/'.strtr($item['value'],['%' => '(.*?)', '_' => '(.)']).'/iu", $'.$item['column'].'))';
-									break;
-								case "not like":
-									$rez.=' (false===preg_match("/'.strtr($item['value'],['%' => '(.*?)', '_' => '(.)']).'/iu", $'.$item['column'].'))';
-									break;
-								
-								default:
-									{
-									//само сравнение - оператор = > < <> !=
-									$value='"'.$item['value'].'"';
-									switch($item['operator'])
-										{
-											case "=":$l="==0";break;
-											case "!=":
-											case "<>":
-												$l="!=0";break;
-											default: $l=$item['operator']."0";
-										}
-									$rez.=" (strnatcasecmp(\${$item['column']},$value){$l}) ".$op;
-									}
-							}
-					}
-				elseif ($item['type']=='int_val' or $item['type']=='null' or $item['type']=='real_val') 
-					{
-						if ($item['operator']=="=") {$item['operator']="==";}
-						$rez.=" \${$item['column']}{$item['operator']}{$item['value']} ".$op;
-						
-					}
-				$i++;
-			}
-	}
+    $rez='';
+    $i=0;
+    foreach ($struct["args"] as $item){
+        if (array_key_exists("args",$item))	{
+            //рекурския
+            $rez.=" (".$this->tree($item).") ".$struct['ops'][$i];$i++;
+        }else{
+            //связывающие логические операторы
+            if (isset($struct['ops'][$i])){
+                $op=$struct['ops'][$i];
+            } else {$op="";}
+            $this->_values[]=$item['column'];
+            if ($item['type']=='text_val') 	{
+                switch ($item['operator']){
+                    case "like":
+                        $rez.=' (false!=preg_match("/'.strtr($item['value'],['%' => '(.*?)', '_' => '(.)']).'/iu", $'.$item['column'].'))';
+                        break;
+                    case "not like":
+                        $rez.=' (false===preg_match("/'.strtr($item['value'],['%' => '(.*?)', '_' => '(.)']).'/iu", $'.$item['column'].'))';
+                        break;
+                    default:{
+                        //само сравнение - оператор = > < <> !=
+                        $value='"'.$item['value'].'"';
+                        switch($item['operator']){
+                            case "=":$l="==0";break;
+                            case "!=":
+                            case "<>":
+                                $l="!=0";break;
+                            default: $l=$item['operator']."0";
+                        }
+                        $rez.=" (strnatcasecmp(\${$item['column']},$value){$l}) ".$op;
+                    }
+                }
+            } elseif ($item['type']=='int_val' or $item['type']=='real_val') {
+                if ($item['operator']=="=") {$item['operator']="==";}
+                $rez.=" \${$item['column']}{$item['operator']}{$item['value']} ".$op;
+            } elseif($item['type']=='null'){
+                //значение null
+                $this->_values_null[]=$item['column'];
+                if ($item['operator']=="=") {$item['operator']="==";}
+                $rez.=" \${$item['column']}{$item['operator']}{$item['value']} ".$op;
+            }
+            $i++;
+        }
+    }
 return $rez;
 }
 

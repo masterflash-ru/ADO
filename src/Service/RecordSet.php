@@ -1032,73 +1032,63 @@ $this->temp_rez_array = array('sort' => [], 	'filter' => []);
 
 public function Find ($Criteria, $SkipRows = 0,  $SearchDirection = adSearchForward,  $Start = '')
  {
-	 /*
+/*
  //поиск записей 
  $Criteria - строка поиска, аналогична SQL
- 
+
  SkipRows - начало поиска производить сместившись от закладки
  $Start (если установлено) или от текущей строки
   
  $SearchDirection - направление поиска adSearchForward , adSearchBackward $Start - закладка
 */
 
-$field_name = $this->get_field_name_false;
-if ($SearchDirection == adSearchForward) {$record_count = 1;}
-			 else  {$record_count = $this->RecordCount;}
-$md5_criteria=md5($Criteria);
-if ($Start) {$this->Move( $SkipRows,  $Start);} // перейти  к  закладке, т.к. она явно указана
-		else 
-			{
-				 if (! $this->Finding_record && ! $this->Find_Criteria_hash || $md5_criteria != $this->Find_Criteria_hash)
-				 			{$this->jmp_record($record_count + $SkipRows);} // ищем  с  самого  начала,  т.к.  это  первый  поиск
-						else  {$this->jmp_record($this->Finding_record + $SkipRows);} // ищем  с текущего  положения
-				 $this->Find_Criteria_hash = $md5_criteria;
-			}
+    $field_name = $this->get_field_name_false;
+    if ($SearchDirection == adSearchForward) {
+        $record_count = 1;
+    } else  {$record_count = $this->RecordCount;}
+    $md5_criteria=md5($Criteria);
+    if ($Start) {
+        $this->Move( $SkipRows,  $Start);// перейти  к  закладке, т.к. она явно указана
+    } else {
+        if (! $this->Finding_record && ! $this->Find_Criteria_hash || $md5_criteria != $this->Find_Criteria_hash) {
+            $this->jmp_record($record_count + $SkipRows);// ищем  с  самого  начала,  т.к.  это  первый  поиск
+        } else {
+            $this->jmp_record($this->Finding_record + $SkipRows);// ищем  с текущего  положения
+        } 
+        $this->Find_Criteria_hash = $md5_criteria;
+    }
 
-			 // сейчас рекордсет установлен и готов к проверке на критерий в зависимости от направления крутимся в разные стороны
-			//$find = new FilterFind(); // объект  поиска поиск  вперед
-			 
-			if (!array_key_exists($md5_criteria,$this->_cache_where1))
-				{
-					$this->Parser=new Parser();
-					$struct=$this->Parser->parse($Criteria);
-					$this->_cache_where1[$md5_criteria]=$this->Parser->create($struct);
-				}
-			$___s___=$this->_cache_where1[$md5_criteria];
-			 
-			 if ($SearchDirection == adSearchForward) 
-			 			{
-							while (! $this->EOF) 
-									{ // крутимся  пока  не  конец  записей
-										$arr_item = $this->rez_array[$this->container['absoluteposition'] -
-										$this->AbsolutePosition_min_max[0]]; // текущая запись
-										
-										unset($arr_item['status']); // удалим служебную информацию
-										$rez_array = array_combine($field_name, $arr_item); // сделать  массив что  бы ключи были  не  числовые а  имена полей,  и  преобразовать  в  переменные
-										extract($rez_array);
-										if (eval($___s___.';'))
-											 {
-												 $this->Finding_record = $this->container['absoluteposition'];
-												 return;
-												}
-										$this->MoveNext(); // след.  запись
-								 	}
-							}
+	 // сейчас рекордсет установлен и готов к проверке на критерий в зависимости от направления крутимся в разные стороны
+	if (!array_key_exists($md5_criteria,$this->_cache_where1)) {
+        $this->Parser=new Parser();
+        $struct=$this->Parser->parse($Criteria);
+        $this->_cache_where1[$md5_criteria]=$this->Parser->create($struct,$field_name);
+    }
+    $___s___=$this->_cache_where1[$md5_criteria];
+    if ($SearchDirection == adSearchForward) {
+        while (! $this->EOF) { // крутимся  пока  не  конец  записей
+            $arr_item = $this->rez_array[$this->container['absoluteposition'] -	$this->AbsolutePosition_min_max[0]]; // текущая запись
+            unset($arr_item['status']); // удалим служебную информацию
+            $rez_array = array_combine($field_name, $arr_item); // сделать  массив что  бы ключи были  не  числовые а  имена полей,  и  преобразовать  в  переменные
+            extract($rez_array);
+            if (eval($___s___.';')) {
+                $this->Finding_record = $this->container['absoluteposition'];
+                return;
+            }
+            $this->MoveNext(); // след.  запись
+        }
+    }
 	// поиск назад
-	 if ($SearchDirection ==  adSearchBackward)
-			 				{
-								while (! $this->BOF)
-										 { // крутимся  пока  не  конец  записей
-											$arr_item = $this->rez_array[$this->container['absoluteposition'] -
-											$this->AbsolutePosition_min_max[0]]; // текущая  запись
-											 if ($find->Filter( $arr_item,   $field_name,  $Criteria)) 
-											 		{
-														$this->Finding_record = $this->container['absoluteposition'];
-														return;
-													}
-												$this->MovePrevious(); // след. запись  (переходим  к  предыдущей
-											}
-								}
+    if ($SearchDirection ==  adSearchBackward)	{
+        while (! $this->BOF){ // крутимся  пока  не  конец  записей
+            $arr_item = $this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]]; // текущая  запись
+            if ($find->Filter( $arr_item,   $field_name,  $Criteria)) {
+                $this->Finding_record = $this->container['absoluteposition'];
+                return;
+            }
+            $this->MovePrevious(); // след. запись  (переходим  к  предыдущей
+        }
+    }
 }
 
 public function GetRows ( $Rows = adGetRowsRest,   $Start = NULL,  $Field = NULL)
