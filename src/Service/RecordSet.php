@@ -1267,70 +1267,65 @@ if (is_array($rez))
 
 private function RsFilter ()
 { /*
- фильтрация  объектов  Field  по  условию  модифицирует  массив  $this->rez_array,  заодно  корректирует  кол-во  записей, 
- страниц  работает  только  при  ксловии  что  загружено  все,  т.е.  $this->_MaxRecords=0  иначе  фильтрация  просто  игнорируется */
-if ($this->container['maxrecords'] > 0) 
-		{
-			$this->temp_rez_array['filter'] = [];
-			throw new ADOException(  $this->ActiveConnect,  7,   'RecordSet:' .	$this->RecordSetName,    array(  'RsFilter()'));
-		} // ошибка,  т.к.  не  все  записи  загружены  восстановить  кеш  в  полном  объеме,  что  бы  вновь  начать  фильтрацию
-if (count( $this->temp_rez_array['filter']))
-								{$this->rez_array = $this->temp_rez_array['filter'];}
-							else
-								{$this->temp_rez_array['filter'] = $this->rez_array;}
-// отмена фильтрации?
-if (count(  $this->temp_rez_array['filter']) &&! $this->container['filter']) 
-		{
-		   $this->rez_array = $this->temp_rez_array['filter'];
-		   $this->RecordCount = count( $this->rez_array);
-		   // предельные границы
-		   $this->AbsolutePosition_min_max[0] = 1; // в начале  запись $AbsolutePosition
-		   $this->AbsolutePosition_min_max[1] = $this->RecordCount -1; // в конце номер последней
-		   $this->temp_rez_array['filter'] = []; // освободим память
-		   $this->jmp_record( 1);
-		   return;
-		   }
-		   
-		   // загрузить  объект  для  поиска/фильтрации  и  выполнить  фильтрацию,
-			// если условие в виде строки, тогда ищем в отдельном объекте, иначе внутри рекордсета
- if (is_string($this->container['filter']))
-		 {
-			$rez = []; // очистить выходной буфер
-			$h=md5($this->container['filter']);
-			if (!array_key_exists($h,$this->_cache_where))
-				{
-					$this->Parser=new Parser();
-					$struct=$this->Parser->parse($this->container['filter']);
-					$this->_cache_where[$h]=$this->Parser->create($struct);
-				}
-			$___s___=$this->_cache_where[$h];
-			foreach ($this->rez_array as $rez_array) 
-				{
-					$rez_array_ = $rez_array;
-					unset($rez_array_['status']); // удалим служебные флаги
-					$rez_array_ = array_combine($this->get_field_name_false, $rez_array_); // сделать  массив что бы ключи были не числовые а имена полей, и преобразовать в переменные
-					extract($rez_array_);
-					if (eval($___s___.';')) {$rez[]=$rez_array;}
-				}
-				$this->rez_array= $rez;
-		 }
-				 else 
-				 		{ // поиск закладок, они заданы в виде массива
-						 if (! is_array( $this->container['filter'])) throw new ADOException( $this->ActiveConnect,  'RecordSet:' .  $this->RecordSetName);
-						 $rez = [];
-						 foreach ($this->rez_array as $rez_array) 
-						 		{ // пробежим  по всем записям
-									 $a = array_search( $rez_array['status']['BookMark'],  $this->container['filter']); // ищем
-									 if ($a !==  false)  $rez[] = $rez_array; // найдено
-					 			 }
-						 $this->rez_array = $rez;
-						 }
-						 // кол-во  записей
-$this->RecordCount = count( $this->rez_array);
-// предельные границы
-$this->AbsolutePosition_min_max[0] = 1; // в начале запись $AbsolutePosition
-$this->AbsolutePosition_min_max[1] = $this->RecordCount; // в конце номер последней
-$this->jmp_record( 1);
+     фильтрация  объектов  Field  по  условию  модифицирует  массив  $this->rez_array,  заодно  корректирует  кол-во  записей, 
+     страниц  работает  только  при  ксловии  что  загружено  все,  т.е.  $this->_MaxRecords=0  иначе  фильтрация  просто  игнорируется */
+    if ($this->container['maxrecords'] > 0) {
+        $this->temp_rez_array['filter'] = [];
+        throw new ADOException(  $this->ActiveConnect,  7,   'RecordSet:' .	$this->RecordSetName,    array(  'RsFilter()'));
+    } // ошибка,  т.к.  не  все  записи  загружены  восстановить  кеш  в  полном  объеме,  что  бы  вновь  начать  фильтрацию
+    if (count( $this->temp_rez_array['filter'])) {
+        $this->rez_array = $this->temp_rez_array['filter'];
+    } else {
+        $this->temp_rez_array['filter'] = $this->rez_array;
+    }
+    // отмена фильтрации?
+    if (count(  $this->temp_rez_array['filter']) &&! $this->container['filter']) {
+        $this->rez_array = $this->temp_rez_array['filter'];
+        $this->RecordCount = count( $this->rez_array);
+        // предельные границы
+        $this->AbsolutePosition_min_max[0] = 1; // в начале  запись $AbsolutePosition
+        $this->AbsolutePosition_min_max[1] = $this->RecordCount -1; // в конце номер последней
+        $this->temp_rez_array['filter'] = []; // освободим память
+        $this->jmp_record( 1);
+        return;
+    }
+
+     // загрузить  объект  для  поиска/фильтрации  и  выполнить  фильтрацию,
+    // если условие в виде строки, тогда ищем в отдельном объекте, иначе внутри рекордсета
+     if (is_string($this->container['filter'])) {
+         $rez = []; // очистить выходной буфер
+         $h=md5($this->container['filter']);
+         if (!array_key_exists($h,$this->_cache_where)) {
+             $this->Parser=new Parser();
+             $struct=$this->Parser->parse($this->container['filter']);
+             $this->_cache_where[$h]=$this->Parser->create($struct,$this->get_field_name_false);
+         }
+         $___s___=$this->_cache_where[$h];
+         foreach ($this->rez_array as $rez_array) {
+             $rez_array_ = $rez_array;
+             unset($rez_array_['status']); // удалим служебные флаги
+             $rez_array_ = array_combine($this->get_field_name_false, $rez_array_); // сделать  массив что бы ключи были не числовые а имена полей, и преобразовать в переменные
+             extract($rez_array_);
+             if (eval($___s___.';')) {$rez[]=$rez_array;}
+         }
+         $this->rez_array= $rez;
+     } else {
+         // поиск закладок, они заданы в виде массива
+         if (! is_array( $this->container['filter'])) throw new ADOException( $this->ActiveConnect,  'RecordSet:' .  $this->RecordSetName);
+         $rez = [];
+         foreach ($this->rez_array as $rez_array)  {
+             // пробежим  по всем записям
+             $a = array_search( $rez_array['status']['BookMark'],  $this->container['filter']); // ищем
+             if ($a !==  false)  $rez[] = $rez_array; // найдено
+         }
+         $this->rez_array = $rez;
+     }
+    // кол-во  записей
+    $this->RecordCount = count( $this->rez_array);
+    // предельные границы
+    $this->AbsolutePosition_min_max[0] = 1; // в начале запись $AbsolutePosition
+    $this->AbsolutePosition_min_max[1] = $this->RecordCount; // в конце номер последней
+    $this->jmp_record( 1);
 }
 
 private function RsSort ()
