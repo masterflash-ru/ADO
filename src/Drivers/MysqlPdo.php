@@ -67,12 +67,16 @@ class MysqlPdo extends AbstractPdo
             $column_count = count ( $old_value_array ); // кол-во колонок
             $primary_key = []; // хранит массив имен полей которые являются первичными ключами
             $ColumnMeta=[];
+            $keys=[];//просто ключи
             for($i = 0; $i < $column_count; $i ++) {
                 // пробежим по колонкам и поищем первичный ключ
                 $ColumnMetaItem =$this->loadColumnMeta($stmt, $i);
                 $flags = $ColumnMetaItem ['flags']; // флаги в колонках
                 if (in_array ( 'primary_key', $flags )){
                     $primary_key [$ColumnMetaItem ['name']] = $old_value_array [$ColumnMetaItem ['name']];
+                }
+                if (in_array ( 'multiple_key', $flags ) || in_array ( 'unique_key', $flags )){
+                    $keys [$ColumnMetaItem ['name']] = $old_value_array [$ColumnMetaItem ['name']];
                 }
                 $ColumnMeta[$ColumnMetaItem ['name']]=$ColumnMetaItem;
             }
@@ -89,7 +93,19 @@ class MysqlPdo extends AbstractPdo
                         $s1 [] = '`'.$k . "`=" . $this->quote($v,$ColumnMeta[$k],$connect_link);
                     }
                 }
-            } else { // первичного ключа нет
+            } elseif (count ( $keys ) > 0){//обычные ключи
+                $s = [];
+                foreach ( $keys as $k => $v ){
+                        $s [] ='`'. $k . "`=" . $this->quote($v,$ColumnMeta[$k],$connect_link) ;
+                }
+                $s1 = [];
+                foreach ( $new_value_array as $k => $v ){
+                    if ($v!==$old_value_array[$k]){
+                        $s1 [] = '`'.$k . "`=" . $this->quote($v,$ColumnMeta[$k],$connect_link);
+                    }
+                }
+
+            } else { // первичного ключа нет и вообще нет никаких ключей, самый худший вариант
                 $s = [];
                 foreach ( $old_value_array as $k => $v ){
                         $s [] = '`'.$k . "`=" . $this->quote($v,$ColumnMeta[$k],$connect_link);
