@@ -316,8 +316,9 @@ public function create($struct,$field_name)
 {
 	$r=$this->tree($struct);
 	$rez="";
-	foreach (array_diff($this->_values, $field_name) as $v){
-            $rez.= "throw new Exception('Переменная ($v) в условии не определена');\n";
+    $a_d=array_diff($this->_values, $field_name);
+	if (!empty($a_d)){
+            throw new \Exception('Переменные в условии '.implode(", ",$a_d) .' в условии не определены');
     }
 	return $rez." return ".$r.";";
 }
