@@ -31,8 +31,9 @@ class DataColumn
  	public $ReadOnly = false; 	// возвращает true если данные объекта только для чтения
  	public $Unique; 			// true - если данные уникальны в колонке
 	public $PrimaryKey=false;	//true если это первичный ключ
+    public $Key=false;
  	
- 	public function __construct ($columnName, array $ColumnMeta = NULL, $expr = NULL, 	$MappingType = NULL)
+ 	public function __construct ($columnName, array $ColumnMeta = null, $expr = null, 	$MappingType = null)
  	{ /* 
 	 $columnName  -  имя  колонки  
 	 $ColumnMeta  метаданные колонки  
@@ -43,20 +44,23 @@ class DataColumn
 		if (isset($ColumnMeta['Ordinal'])) {$this->Ordinal = $ColumnMeta['Ordinal'];}
 		if (isset($ColumnMeta['table'])) {$this->Table = $ColumnMeta['table'];}
 		if (isset($ColumnMeta['name'])) {$this->Caption = $ColumnMeta['name'];}
-		if (isset($ColumnMeta['flags'])) 
-			{
-				$this->AllowDbNull = ! in_array('not_null', $ColumnMeta['flags']);
-				$this->AutoIncrement = in_array('primary_key',  $ColumnMeta['flags']);
-				$this->PrimaryKey = in_array('primary_key',  $ColumnMeta['flags']);
-				$this->Unique = in_array('unique_key',  $ColumnMeta['flags']);
-			}
+		if (isset($ColumnMeta['flags'])) {
+            $this->AllowDbNull = ! in_array('not_null', $ColumnMeta['flags']);
+            $this->AutoIncrement = in_array('primary_key',  $ColumnMeta['flags']);
+            $this->PrimaryKey = in_array('primary_key',  $ColumnMeta['flags']);
+            $this->Unique = in_array('unique_key',  $ColumnMeta['flags']);
+            $this->Key = in_array('multiple_key',  $ColumnMeta['flags']);
+        }
 
- 	 	if (isset($ColumnMeta['Type']))  {$this->DataType = $ColumnMeta['Type'];}
+ 	 	if (isset($ColumnMeta['Type']))  {
+            $this->DataType = $ColumnMeta['Type'];
+        }
  	 	// режим отображения колонки/атрибут/сам узел при экспорте в XML
- 	 	if (! empty($MappingType))
- 	 	 	$this->ColumnMapping = $MappingType;
- 	 	else
- 	 	 	$this->ColumnMapping = MappingTypeElement; // делаем по умолчанию вывод в XML в виде узла
+ 	 	if (! empty($MappingType)) {
+            $this->ColumnMapping = $MappingType;
+        } else {
+            $this->ColumnMapping = MappingTypeElement; // делаем по умолчанию вывод в XML в виде узла
+        }
  	
  	}
 
