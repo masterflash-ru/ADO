@@ -6,60 +6,59 @@ use ADO\Entity\Collections;
 
 class ADOException extends \RuntimeException
 {
-	public $errors; // коллекция ошибок ADO
-	public static $ADOMessage;
-	public function __construct ($connection = NULL, $code = 0, $source = 'not known', 	$m_a = array())
-	{ /*
-	   * $connection - ссылка на объект Connection, в его коллекцию будет
-	   * записана ошибка перед выбросом исключения, если $connection не
-	   * Connection, в коллекцию игнорируется запись $code - код $m_a -
-	   * подстановочный текст в элементы вида %0 %1 если низкоуровневая ошибка
-	   * провайдера, то предварительно в коллекцию $errors заносим все ошибки, а
-	   * потом вызываем исключение throw new ADOException(Объект connection);
-	   * при этом в само исключение записывается последний элемент коллекции
-	   * ошибок
-	   */
+    public $errors; // коллекция ошибок ADO
+    public static $ADOMessage;
+    public function __construct ($connection = NULL, $code = 0, $source = 'not known',     $m_a = array())
+    { /*
+       * $connection - ссылка на объект Connection, в его коллекцию будет
+       * записана ошибка перед выбросом исключения, если $connection не
+       * Connection, в коллекцию игнорируется запись $code - код $m_a -
+       * подстановочный текст в элементы вида %0 %1 если низкоуровневая ошибка
+       * провайдера, то предварительно в коллекцию $errors заносим все ошибки, а
+       * потом вызываем исключение throw new ADOException(Объект connection);
+       * при этом в само исключение записывается последний элемент коллекции
+       * ошибок
+       */
 
-		if ($connection instanceof Connection) { 
+        if ($connection instanceof Connection) { 
             //  обработка ошибок ADO когда имеем соединение с базой т.е. имеем
-		  // нормальны объект Connection
-			if ($code) {
-				// обычная обработка ADO, коды ошибок и сообщения в xml файле
-				$text = self::GetADOMessage($code, $m_a); // получить текстовое сообщение об ошибке в зависимости от локали
-				$connection->Errors->add(
-											array('number' => $code,
+          // нормальны объект Connection
+            if ($code) {
+                // обычная обработка ADO, коды ошибок и сообщения в xml файле
+                $text = self::GetADOMessage($code, $m_a); // получить текстовое сообщение об ошибке в зависимости от локали
+                $connection->Errors->add(
+                                            array('number' => $code,
                                                   'description' => $text, 
                                                   'source' => $source
                                                  )
-										);
-			} else { // более низкого уровня ошибка, берем последнюю из
-					 // коллекции
-				$code = $connection->Errors->Item[count($connection->Errors->Item) - 1]->number; // ошибка провайдера
-				$text = $connection->Errors->Item[count($connection->Errors->Item) - 1]->description; // текст сообщения провайдера
-			}
-			$this->errors = $connection->Errors; // добавим в коллекцию ошибку// объекта Connection не имеем, обычные ошибки
-		}		 
-		else {
-			
-			if ($connection instanceof ADOException) {
+                                        );
+            } else { // более низкого уровня ошибка, берем последнюю из
+                     // коллекции
+                $code = $connection->Errors->Item[count($connection->Errors->Item) - 1]->number; // ошибка провайдера
+                $text = $connection->Errors->Item[count($connection->Errors->Item) - 1]->description; // текст сообщения провайдера
+            }
+            $this->errors = $connection->Errors; // добавим в коллекцию ошибку// объекта Connection не имеем, обычные ошибки
+        }         
+        else {
+            if ($connection instanceof ADOException) {
                 // на входе может быть экземпляр ADOException print_r($connection);
-				$text = $connection->getMessage();
-				$code = $connection->getCode();
-				$this->errors = $connection->errors; // перепишем коллекцию, если она есть
-			} else {
-				$text = self::GetADOMessage($code, $m_a); // получить текстовое сообщение об ошибке в зависимости от локали
-				$this->errors = new Collections();
-				$this->errors->add(
-						array('number' => $code, 
-								'description' => $text, 
-								'source' => $source)
-								);
-			}
-		}
-		// инициализировать родительский объект
-		
-		parent::__construct($text, $code);
-	}
+                $text = $connection->getMessage();
+                $code = $connection->getCode();
+                $this->errors = $connection->errors; // перепишем коллекцию, если она есть
+            } else {
+                $text = self::GetADOMessage($code, $m_a); // получить текстовое сообщение об ошибке в зависимости от локали
+                $this->errors = new Collections();
+                $this->errors->add(
+                        array('number' => $code, 
+                                'description' => $text, 
+                                'source' => $source)
+                                );
+            }
+        }
+        // инициализировать родительский объект
+        
+        parent::__construct($text, $code);
+    }
 
 
 
