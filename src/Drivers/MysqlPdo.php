@@ -43,7 +43,9 @@ class MysqlPdo extends AbstractPdo
             $i=0;
             foreach ( $new_value_array as $k => $v ){
                 //получить описание полей и проверить на primary_key
-                $ColumnMetaItem =$this->loadColumnMeta($stmt, $i);
+                $cc =$this->loadColumnMeta($stmt, $i);
+                if (empty($cc['table'])){continue;}
+                $ColumnMetaItem =$cc;
                 $s1[] =$this->quote($v,$ColumnMetaItem,$connect_link);
                 $flags = $ColumnMetaItem['flags']; // флаги в колонках
                 if (in_array ( 'primary_key', $flags )) {
@@ -70,7 +72,10 @@ class MysqlPdo extends AbstractPdo
             $keys=[];//просто ключи
             for($i = 0; $i < $column_count; $i ++) {
                 // пробежим по колонкам и поищем первичный ключ
-                $ColumnMetaItem =$this->loadColumnMeta($stmt, $i);
+                $cc =$this->loadColumnMeta($stmt, $i);
+                if (empty($cc['table'])){continue;}
+                $ColumnMetaItem =$cc;
+
                 $flags = $ColumnMetaItem ['flags']; // флаги в колонках
                 if (in_array ( 'primary_key', $flags )){
                     $primary_key [$ColumnMetaItem ['name']] = $old_value_array [$ColumnMetaItem ['name']];
@@ -128,7 +133,9 @@ class MysqlPdo extends AbstractPdo
             $primary_key = []; // хранит массив имен полей которые являются первичными ключами
             for($i = 0; $i < $column_count; $i ++) {
                 // пробежим по колонкам и поищем первичный ключ
-                $ColumnMetaItem =$this->loadColumnMeta($stmt, $i);
+                $cc =$this->loadColumnMeta($stmt, $i);
+                if (empty($cc['table'])){continue;}
+                $ColumnMetaItem =$cc;
                 $flags = $ColumnMetaItem ['flags']; // флаги в колонках
                 if (in_array ( 'primary_key', $flags )) {
                     $primary_key [$ColumnMetaItem['name']] = $old_value_array [$ColumnMetaItem ['name']];
