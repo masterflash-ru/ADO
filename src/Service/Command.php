@@ -156,7 +156,7 @@ private function sql_parser ($sql)
     $position = 0;
     $query = '';
     for (; $position < $strlen; ++ $position) {
-        $char = $sql{$position};
+        $char = $sql[$position];
         switch ($char) {
             case '-':
                 if (substr($sql, $position, 3) !== '-- ') {
@@ -165,7 +165,7 @@ private function sql_parser ($sql)
                 }
             case '#':
                 while ($char !== "\r" && $char !== "\n" && $position < $strlen - 1){
-                    $char = $sql{++ $position};
+                    $char = $sql[++ $position];
                 }
                 break;
   
@@ -175,14 +175,14 @@ private function sql_parser ($sql)
                 $quote = $char;
                 $query .= $quote;
                 while ($position < $strlen - 1) {
-                    $char = $sql{++ $position};
+                    $char = $sql[++ $position];
                     if ($char === '\\') {
                         $query .= $char;
                         if ($position < $strlen - 1) {
-                            $char = $sql{++ $position};
+                            $char = $sql[++ $position];
                             $query .= $char;
                             if ($position < $strlen - 1){
-                                $char = $sql{++ $position};
+                                $char = $sql[++ $position];
                             }
                         } else {
                             break;
