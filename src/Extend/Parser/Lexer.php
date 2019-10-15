@@ -53,7 +53,7 @@ class Lexer
     {
         ++$this->tokPtr;
         ++$this->tokLen;
-        return ($this->tokPtr <= $this->stringLen) ? $this->string{$this->tokPtr - 1} : null;
+        return ($this->tokPtr <= $this->stringLen) ? $this->string[$this->tokPtr - 1] : null;
     }
 
    public   function unget()
@@ -65,7 +65,7 @@ class Lexer
    public   function skip()
     {
         ++$this->tokStart;
-        return ($this->tokPtr != $this->stringLen) ? $this->string{$this->tokPtr++} : null;
+        return ($this->tokPtr != $this->stringLen) ? $this->string[$this->tokPtr++] : null;
     }
 
   public   function revert()
