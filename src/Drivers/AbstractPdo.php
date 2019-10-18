@@ -76,7 +76,8 @@ class AbstractPdo
             "CONNECTION_STATUS",
             "PERSISTENT",
             "SERVER_INFO",
-            "SERVER_VERSION" 
+            "SERVER_VERSION",
+            "DRIVER_NAME",
             ];
     }
 
