@@ -52,54 +52,52 @@ public function ReadXmlSchema (\stdClass $IOstdClass)
 }
 
 public function GetXmlSchema (\stdClass $IOstdClass)
-	{ // получить схему  структуры RS в виде / строки
-		$IOstdClass->rs->MoveFirst(); // перематываем в начало  если просто схема, то генерируем как  обычно, иначе по особому, т.к. схема  вставляется после первого узла!
-		if (! $IOstdClass->flag_create_xsdxml)
-			$xml = new \SimpleXMLIterator('<?xml version="1.0" encoding="utf-8"?><xs:schema id="' . $IOstdClass->rs->RecordSetName . '" xmlns="http://masterflash.ru" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" />');
-			else 
-					{ // $this->_create_xsdxml хранит ухел куда нужно вставить схему
-					$xml = $IOstdClass->_create_xsdxml;
-					}
-$xml1 = $xml->addChild('element', '', "http://www.w3.org/2001/XMLSchema"); // print_r($this->flag_create_xsdxml);exit;
-$xml1->addAttribute('name', $IOstdClass->rs->RecordSetName);
-$xml1->addAttribute('msdata:IsDataSet', "true", 	"urn:schemas-microsoft-com:xml-msdata");
-$xml1->addAttribute('msdata:UseCurrentLocale', "true", "urn:schemas-microsoft-com:xml-msdata");
-$xml1 = $xml1->addChild('complexType', '')->addChild('choice', '');
-$xml1->addAttribute('minOccurs', 0);
-$xml1->addAttribute('maxOccurs', "unbounded");
-$xml1 = $xml1->addChild('element', '');
-$xml1->addAttribute('name', $IOstdClass->rs->DataColumns->Item[0]->Table);
-$xml1 = $xml1->addChild('complexType', '');
-$flag_sequence = false; // флаг вывода значений (хоть одного) в виде узла
-$ii = 0;
-foreach ($IOstdClass->rs->DataColumns as $v)
-	 {
-		if ($v->ColumnMapping == ADO::MappingTypeElement) 
-			{
-				if (! $flag_sequence)	$xml2 = $xml1->addChild('sequence', ''); // добавим только ОДИН раз!!!
-				$xml3 = $xml2->addChild('element', ''); // добавми описатель элмента
-				$xml3->addAttribute('name', $v->ColumnName);
-				$xml3->addAttribute('minOccurs', 0);
-				// тип данных
-
-				$this->create_xml_element_type($v, $xml3); // сгенерировать атрибуты для данного узла, в зависимости от типа данных
-				$xml3->addAttribute('msdata:Ordinal', $ii, "urn:schemas-microsoft-com:xml-msdata"); // порядоковый номер поля
-				$flag_sequence = true; // флаг генерации sequence
-				$ii ++;
-			}
-	// проверяем колонки у которых вывод в виде атрибут
-	if ($v->ColumnMapping == ADO::MappingTypeAttribute)
-			 {
-				$xml3_1 = $xml1->addChild('attribute', ''); // добавми описатель элмента
-				$xml3_1->addAttribute('name', $v->ColumnName);
-				// тип данных
-				$this->create_xml_element_type($v, $xml3_1); // сгенерировать атрибуты для данного узла, в зависимости от типа данных
-				if ($v->ColumnMapping == ADO::MappingTypeHidden)
-				$xml3_1->addAttribute('use', "prohibited"); // добавим один атрибут, если колонка скрытая
-			}
-	}
-$IOstdClass->rs->MoveFirst(); // перематываем в начало
-return $xml->asXML();
+{ // получить схему  структуры RS в виде / строки
+    $IOstdClass->rs->MoveFirst(); // перематываем в начало  если просто схема, то генерируем как  обычно, иначе по особому, т.к. схема  вставляется после первого узла!
+	if (! $IOstdClass->flag_create_xsdxml){
+        $xml = new \SimpleXMLIterator('<?xml version="1.0" encoding="utf-8"?><xs:schema id="' . $IOstdClass->rs->RecordSetName . '" xmlns="http://masterflash.ru" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" />');
+    } else { // $this->_create_xsdxml хранит ухел куда нужно вставить схему
+            $xml = $IOstdClass->_create_xsdxml;
+    }
+    $xml1 = $xml->addChild('element', '', "http://www.w3.org/2001/XMLSchema"); // print_r($this->flag_create_xsdxml);exit;
+    $xml1->addAttribute('name', $IOstdClass->rs->RecordSetName);
+    $xml1->addAttribute('msdata:IsDataSet', "true", 	"urn:schemas-microsoft-com:xml-msdata");
+    $xml1->addAttribute('msdata:UseCurrentLocale', "true", "urn:schemas-microsoft-com:xml-msdata");
+    $xml1 = $xml1->addChild('complexType', '')->addChild('choice', '');
+    $xml1->addAttribute('minOccurs', 0);
+    $xml1->addAttribute('maxOccurs', "unbounded");
+    $xml1 = $xml1->addChild('element', '');
+    $xml1->addAttribute('name', $IOstdClass->rs->DataColumns->Item[0]->Table);
+    $xml1 = $xml1->addChild('complexType', '');
+    $flag_sequence = false; // флаг вывода значений (хоть одного) в виде узла
+    $ii = 0;
+    foreach ($IOstdClass->rs->DataColumns as $v){
+        if ($v->ColumnMapping == ADO::MappingTypeElement) {
+            if (! $flag_sequence) {
+                $xml2 = $xml1->addChild('sequence', ''); // добавим только ОДИН раз!!!
+            }
+            $xml3 = $xml2->addChild('element', ''); // добавми описатель элмента
+            $xml3->addAttribute('name', $v->ColumnName);
+            $xml3->addAttribute('minOccurs', 0);
+            // тип данных
+            $this->create_xml_element_type($v, $xml3); // сгенерировать атрибуты для данного узла, в зависимости от типа данных
+            $xml3->addAttribute('msdata:Ordinal', $ii, "urn:schemas-microsoft-com:xml-msdata"); // порядоковый номер поля
+            $flag_sequence = true; // флаг генерации sequence
+            $ii ++;
+        }
+        // проверяем колонки у которых вывод в виде атрибут
+        if ($v->ColumnMapping == ADO::MappingTypeAttribute)	 {
+            $xml3_1 = $xml1->addChild('attribute', ''); // добавми описатель элмента
+            $xml3_1->addAttribute('name', $v->ColumnName);
+            // тип данных
+            $this->create_xml_element_type($v, $xml3_1); // сгенерировать атрибуты для данного узла, в зависимости от типа данных
+            if ($v->ColumnMapping == ADO::MappingTypeHidden){
+                $xml3_1->addAttribute('use', "prohibited"); // добавим один атрибут, если колонка скрытая
+            }
+        }
+    }
+    $IOstdClass->rs->MoveFirst(); // перематываем в начало
+    return $xml->asXML();
 }
 
 public function ReadXml (\stdClass $IOstdClass)

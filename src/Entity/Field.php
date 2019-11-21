@@ -1,19 +1,31 @@
 <?php
 /*
-*
+* элемент поля для текущей записи
 */
 namespace ADO\Entity;
 
+use ADO\Exception\ADOException;
 
 class Field
-{ // объект - элемент коллекции
-     private $parent_recordset; // объект родительсмкого рекордсета
-     // public $DateFormat;//формат даты
-                                      
+{
+    /**
+    * флаг внесения изменения значения в поле
+    */
+    protected $isChange=false;
+    
+    /**
+    * тип курсора
+    */
+    protected $cursortype;
+    
+    /**
+    * имя RecordSet
+    */
+    protected $RecordSetName;
      // перегруженное сво-ва
      private $container = [
         'name' => null,             // имя параметра
-        'originalvalue' => null,    // значение поля до каких-либо изменений, т.е.  старое  значение после изменения
+        'originalvalue' => null,    // значение поля до каких-либо изменений, т.е.  старое  значение
         'value' => null,            // зеначение
         'definedsize' => null,      // максимальный размер поля
         'type' => null,             // тип данных
@@ -79,6 +91,10 @@ class Field
 
      public function __set ($var, $value)
      {
+         if (in_array($var,["RecordSetName","cursortype","isChange"])){
+             $this->{$var}=$value;
+             return;
+         }
           $var = strtolower($var);
           if (! array_key_exists($var, $this->container)) {
                $arr = debug_backtrace();
@@ -88,6 +104,10 @@ class Field
           }
         
         if ($var == 'value') {
+            if ($this->cursortype == adOpenForwardOnly) {
+                throw new ADOException( null, 5, 'RecordSet:' . $this->RecordSetName);
+            }
+
             /*преобразуем типы*/
             if (!is_null($value)){
                 switch ($this->container["type"]){
@@ -111,26 +131,24 @@ class Field
                     }
                 }
             }
-          $this->container[$var] = $value;
-        $this->parent_recordset->change_value($this);
+            $this->container[$var] = $value;
+            $this->isChange=true;
         }
-     
      }
 
      public function __call ($name, $var)
      { // диспетчер служебных функций
-          if ($name == 'set_parent_recordset') {
-               $this->parent_recordset = $var[0];
-               return;
-          }
           if ($name == 'set_value') {
-               $this->container['value'] = $var[0];
-               return;
+              $this->container['value'] = $var[0];
+              $this->container['originalvalue'] = $var[0];
+              return;
+          }
+          if ($name == 'isChange') {
+              $flag=$this->isChange;
+              $this->isChange=false;
+               return $flag;
           }
           echo 'Metod ' . $name . " is not found in Field object!\n";
      
      }
-     
-     // ************************* конец перегрузки
-
 }

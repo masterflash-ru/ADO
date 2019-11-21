@@ -1,50 +1,50 @@
 <?php
-namespace ADO\Entity;
 
-use ArrayIterator;
+namespace ADO\Collection;
+
 use IteratorAggregate;
+use ArrayIterator;
 
-class Parameters implements IteratorAggregate // Iterator
-{ // объект для генерации коллекций
+class Propertys implements IteratorAggregate
+{
      
-     public $count = 0; // кол-во элементов
+     public $count = 0;
      private $position = 0;
 
-     public $Item = array(); // массив объектов числовой
+     public $Item = [];
      
      public function __construct ()
      {
           $this->count = 0;
-          $this->Item = array();
+          $this->Item = [];
      }
 
      public function Append ($item, $index = NULL)
-     { // добавить в коллекцию
-                                                               // сообщение об ошибке
+     {
           /*
            * 0-й элемент это собственно объект/массив 1-й - индекс (номер)
            */
-          if (is_null($index)){
+          if (is_null($index)) {
               $index = $this->count; // порядковый номер
           }
-          if (! is_object($item)){
+          if (! is_object($item)) {
               return false;
           }
           $this->Item[$index] = $item; // записать в виде объекта
-          
           $this->count ++;
      }
 
      public function Delete ($index)
-     { // удалить элемент из коллекции
+     {
           $name = $this->Item[$index]->name;
-          if ($name)
-               unset($this->Item[$name]);
+          if ($name) {
+              unset($this->Item[$name]);
+          }
           unset($this->Item[$index]);
      }
 
      public function Item ($index = 0)
-     { // получить жлемент из коллекции,  возвращается объект
+     {
           return $this->Item[$index];
      }
 
@@ -54,4 +54,3 @@ class Parameters implements IteratorAggregate // Iterator
      }
 
 }
-

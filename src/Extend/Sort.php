@@ -39,15 +39,16 @@ class Sort
  	{
  	 	
  	 	$colDir = strtoupper($colDir);
- 	 	if ($colDir != 'ASC' && $colDir != 'DESC') 	throw new ADOException(NULL, 15, "RecordSet::Sort", array($colDir));
+ 	 	if ($colDir != 'ASC' && $colDir != 'DESC') {
+            throw new ADOException(NULL, 15, "RecordSet::Sort", array($colDir));
+        }
  	 	
  	 	$colDir = constant("self::" . $colDir); // получить направление сортировки 1 или -1
  	 	$idx = $this->_getColIdx($colName);
- 	 	if ($idx < 0) 
-			{
- 	 	 	$this->sortDef[] = [];
- 	 	 	$idx = count($this->sortDef) - 1;
-	 	 	}
+ 	 	if ($idx < 0) {
+            $this->sortDef[] = [];
+            $idx = count($this->sortDef) - 1;
+        }
  	 	$this->sortDef[$idx]["colName"] = $colName;
  	 	$this->sortDef[$idx]["colDir"] = $colDir;
  	 	$this->sortDef[$idx]["compareFunc"] = $compareFunc;
@@ -57,7 +58,9 @@ class Sort
  	function removeColumn ($colName = "")
  	{
  	 	$idx = $this->_getColIdx($colName);
- 	 	if ($idx >= 0)	array_splice($this->sortDef, $idx, 1);
+ 	 	if ($idx >= 0) {
+            array_splice($this->sortDef, $idx, 1);
+        }
  	}
  	
  	// resetColumns - removes any columns from sorting definition. Array to sort
@@ -78,45 +81,45 @@ class Sort
  	function _getColIdx ($colName)
  	{
  	 	$idx = - 1;
- 	 	for ($i = 0; $i < count($this->sortDef); $i ++)
-			{
- 	 	 	$colDef = $this->sortDef[$i];
- 	 	 	if ($colDef["colName"] == $colName)
- 	 	 	 	$idx = $i;
-	 	 	}
- 	 	return $idx;
+ 	 	for ($i = 0; $i < count($this->sortDef); $i ++) {
+            $colDef = $this->sortDef[$i];
+            if ($colDef["colName"] == $colName) {
+                $idx = $i;
+            }
+        }
+        return $idx;
  	}
  	
  	// Comparison function [PRIVATE]
  	function _compare ($a, $b, $idx = 0)
  	{
- 	 	if (count($this->sortDef) == 0) 	return 0;
+ 	 	if (count($this->sortDef) == 0) {
+            return 0;
+        }
  	 	$colDef = $this->sortDef[$idx];
  	 	$a_cmp = $a[$colDef["colName"]];
  	 	$b_cmp = $b[$colDef["colName"]];
- 	 	if (is_null($colDef["compareFunc"]))
-			 {
- 	 	 	$a_dt = strtotime($a_cmp);
+ 	 	if (is_null($colDef["compareFunc"])) {
+            $a_dt = strtotime($a_cmp);
  	 	 	$b_dt = strtotime($b_cmp);
- 	 	 	if (($a_dt == - 1) || ($b_dt == - 1) || ($a_dt == false) ||	 ($b_dt == false)) 	$ret = $colDef["colDir"] *	 strnatcasecmp($a_cmp, $b_cmp);
- 	 	 			else 
-						{
-			 	 	 	 	$ret = $colDef["colDir"] *	 (($a_dt > $b_dt) ? 1 : (($a_dt < $b_dt) ? - 1 : 0));
-	 	 	 	 	 	}
- 	 	 	 	} 
-				else 
-					{
- 	 	 	 	 	$code = '$ret = ' . $colDef["compareFunc"] . '("' . $a_cmp . '","' . $b_cmp . '");';
- 	 	 	 	 	eval($code);
- 	 	 	 	 	$ret = $colDef["colDir"] * $ret;
- 	 	 	 	 	}
- 	 	if ($ret == 0) 
-			{
- 	 	 		if ($idx < (count($this->sortDef) - 1)) 	return $this->_compare($a, $b, $idx + 1);
- 	 	 	 	 	 	 	else 	return $ret;
- 	 	 	 } 
-			 	else 	return $ret;
- 	}
- 
+ 	 	 	if (($a_dt == - 1) || ($b_dt == - 1) || ($a_dt == false) ||	 ($b_dt == false)) {
+                $ret = $colDef["colDir"] * strnatcasecmp($a_cmp, $b_cmp);
+            } else {
+                $ret = $colDef["colDir"] *	 (($a_dt > $b_dt) ? 1 : (($a_dt < $b_dt) ? - 1 : 0));
+            }
+        } else {
+            $code = '$ret = ' . $colDef["compareFunc"] . '("' . $a_cmp . '","' . $b_cmp . '");';
+            eval($code);
+            $ret = $colDef["colDir"] * $ret;
+        }
+        if ($ret == 0) {
+            if ($idx < (count($this->sortDef) - 1)) {
+                return $this->_compare($a, $b, $idx + 1);
+            } else {
+                return $ret;
+            }
+        } else {
+            return $ret;
+        }
+    }
 }
- ?>

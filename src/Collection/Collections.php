@@ -1,6 +1,9 @@
 <?php
+/**
+* коллекция общего применения
+*/
 
-namespace ADO\Entity;
+namespace ADO\Collection;
 
 use ADO\Entity\Collection;
 use IteratorAggregate;
@@ -12,12 +15,12 @@ class Collections implements IteratorAggregate
 	public $count = 0; // кол-во элементов
 	private $position = 0;
 
-	public $Item = array(); // массив объектов числовой
+	public $Item = []; // массив объектов числовой
 	
 	public function __construct ()
 	{
 		$this->count = 0;
-		$this->Item = array();
+		$this->Item = [];
 	}
 
 public function add ($item, $index = NULL)

@@ -1,40 +1,41 @@
 <?php
 
-namespace ADO\Entity;
+namespace ADO\Collection;
 use ArrayIterator;
 use IteratorAggregate;
+use ADO\Entity\DataColumn;
 
-class DataColumns implements IteratorAggregate // Iterator
-{ // объект для генерации коллекций
-     public $count = 0; // кол-во элементов
+class DataColumns implements IteratorAggregate 
+{ 
+     public $count = 0;
      private $position = 0;
 
-     public $Item = array(); // массив объектов числовой
-     public $Item_text = array(); // массив объектов ассоциативный
+     public $Item = [];
+     public $Item_text = [];
      
      public function __construct ()
      {
           $this->count = 0;
-          $this->Item = array();
-          $this->Item_text = array();
+          $this->Item = [];
+          $this->Item_text = [];
      }
      
      
      public function Add (DataColumn $Item)
-     { // добавить в коллекцию
+     {
           $this->Item[$this->count] = $Item; // записать в виде объекта
           $this->Item_text[$Item->ColumnName] = $Item; // записать в виде объекта
           $this->count ++;
      }
 
      public function Delete ($index)
-     { // удалить элемент из коллекции
+     {
           unset($this->Item_text[$this->Item[$index]->ColumnName]);
           unset($this->Item[$index]);
      }
 
      public function Item ($index = 0)
-     { // получить жлемент из коллекции, возвращается объект
+     {
           return $this->Item[$index];
      }
 
@@ -45,12 +46,9 @@ class DataColumns implements IteratorAggregate // Iterator
     
     function __clone()
         {
-            //принудительно копируем объект
             foreach ($this->Item as $i=>$Item)  {
                 $this->Item[$i] = clone $this->Item[$i];
             }
-
-            //принудительно копируем объект
             foreach ($this->Item_text as $i=>$Item) {
                 $this->Item_text[$i] = clone $this->Item_text[$i];
             }

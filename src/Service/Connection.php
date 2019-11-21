@@ -1,9 +1,9 @@
 <?php
 namespace ADO\Service;
 
-use ADO\Entity\Propertys;
+use ADO\Collection\Propertys;
 use ADO\Entity\Property;
-use ADO\Entity\Collections;
+use ADO\Collection\Collections;
 use ADO\Service\RecordSet;
 use ADO\Exception\ADOException;
 /*

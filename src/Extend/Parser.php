@@ -185,92 +185,82 @@ protected function getTok()
 
 protected function parseCondition()
 {
-        $clause = [];$operator="";
-
-        while (true) 
-		{
-            // parse the first argument
-            if ($this->token == 'not') 
-				{
-                	$clause['neg'] = true;
-	                $this->getTok();
-    	        }
-
-            if ($this->token == '(') 
-				{
-                	$this->getTok();
-	                $clause['args'][] = $this->parseCondition();
-    	            if ($this->token != ')') 
-						{
-	        	            $this->raiseError('Expected ")"');
-    		            }
-                	$this->getTok();
-            	}
-			elseif ($this->token == 'ident') {$column = $this->parseIdentifier();}
-			else 
-				{
-					$arg = $this->lexer->tokText;
-					$argtype = $this->token;
-					$clause['args'][] = array(
-						'value' => $arg,
-						'type'  => $argtype,
-						'column'=>$column,
-						"operator"=>$operator
-					);
-					$this->getTok();
-	            }
-
-            if (! $this->isOperator()) 
-				{
-                	// no operator, return
-	                return $clause;
-    	        }
-
-            // parse the operator
-            $op = $this->token;
-            if ($op == 'not') 
-				{
-                	$this->getTok();
-	                $not = 'not ';
-    	            $op = $this->token;
-        		} else {$not = '';}
-
+    $clause = [];
+    $operator="";
+    while (true) {
+        // parse the first argument
+        if ($this->token == 'not') {
+            $clause['neg'] = true;
             $this->getTok();
-            switch ($op) {
-                case 'is':
-                    // parse for 'is' operator
-                    if ($this->token == 'not') {
-                        $op .= ' not';
-                        $this->getTok();
-                    }
-                   // $clause['ops'][] = $op;
-					$operator= $op;
-                    break;
-                case 'like':
-                    //$clause['ops'][] = $not . $op;
-					$operator=$not . $op;
-                    break;
-                case 'between':
-                    // @todo
-                    //$clause['ops'][] = $not . $op;
-                    //$this->getTok();
-                    break;
-                case 'and':
-                case 'or':
-                    $clause['ops'][] = $not . $op;
-                    continue 2;
-                    break;
-                default:
-                   // $clause['ops'][] = $not . $op;
-					$operator=$not . $op;
+        }
+        if ($this->token == '(') {
+            $this->getTok();
+            $clause['args'][] = $this->parseCondition();
+            if ($this->token != ')') {
+                $this->raiseError('Expected ")"');
             }
-            // next argument [with operator]
-
+            $this->getTok();
+        } elseif ($this->token == 'ident') {
+            $column = $this->parseIdentifier();
+        } else {
+            $arg = $this->lexer->tokText;
+            $argtype = $this->token;
+            $clause['args'][] = array(
+                'value' => $arg,
+                'type'  => $argtype,
+                'column'=>$column,
+                "operator"=>$operator
+            );
+            $this->getTok();
+        }
+        if (! $this->isOperator()) {
+            // no operator, return
+            return $clause;
+        }
+        // parse the operator
+        $op = $this->token;
+        if ($op == 'not') {
+            $this->getTok();
+            $not = 'not ';
+            $op = $this->token;
+        } else {
+            $not = '';
         }
 
-        return $clause;
+        $this->getTok();
+        switch ($op) {
+            case 'is':
+                // parse for 'is' operator
+                if ($this->token == 'not') {
+                    $op .= ' not';
+                    $this->getTok();
+                }
+                // $clause['ops'][] = $op;
+                $operator= $op;
+                break;
+            case 'like':
+                //$clause['ops'][] = $not . $op;
+                $operator=$not . $op;
+                break;
+            case 'between':
+                // @todo
+                //$clause['ops'][] = $not . $op;
+                //$this->getTok();
+                break;
+            case 'and':
+            case 'or':
+                $clause['ops'][] = $not . $op;
+                continue 2;
+                break;
+            default:
+                // $clause['ops'][] = $not . $op;
+                $operator=$not . $op;
+        }
+        // next argument [with operator]
     }
-    // }}}
+    return $clause;
+}
+
 
 
     /**
@@ -318,7 +308,7 @@ public function create($struct,$field_name)
 	$rez="";
     $a_d=array_diff($this->_values, $field_name);
 	if (!empty($a_d)){
-            throw new \Exception('Переменные в условии '.implode(", ",$a_d) .' в условии не определены');
+        throw new \Exception('Переменные в условии '.implode(", ",$a_d) .' в условии не определены');
     }
 	return $rez." return ".$r.";";
 }

@@ -1,15 +1,16 @@
 <?php
-namespace ADO\Entity;
+namespace ADO\Collection;
 use IteratorAggregate;
 use ArrayIterator;
+use ADO\Entity\Field;
 
-class Fields implements IteratorAggregate // Iterator
-{ // объект для генерации коллекций
+class Fields implements IteratorAggregate
+{
      
-     public $count = 0; // кол-во элементов
+     public $count = 0;
      private $position = 0;
 
-     public $Item = []; // массив объектов числовой
+     public $Item = [];
      
      public function __construct ()
      {
@@ -18,7 +19,7 @@ class Fields implements IteratorAggregate // Iterator
      }
 
      public function Append ($Name, $Type, $DefinedSize)
-     { // добавить в коллекцию
+     {
           $item = new Field();
           $item->Name = $Name;
           $item->Type = $Type;
@@ -29,21 +30,20 @@ class Fields implements IteratorAggregate // Iterator
      }
 
      public function Add (Field $Item)
-     { // добавить в коллекцию
+     {
           $this->Item[$this->count] = $Item; // записать в виде объекта
           $this->Item[$Item->Name] = $Item; // записать в виде объекта
           $this->count ++;
      }
 
      public function Delete ($index)
-     { // удалить элемент из коллекции
+     {
           unset($this->Item[$this->Item[$index]->Name]);
           unset($this->Item[$index]);
      }
 
      public function Item ($index = 0)
-     { // получить жлемент из коллекции,
-      // возвращается объект
+     {
           return $this->Item[$index];
      }
 
@@ -53,7 +53,6 @@ class Fields implements IteratorAggregate // Iterator
      }
     function __clone()
         {
-            //принудительно копируем объект Field
             foreach ($this->Item as $i=>$Item) {
                 if (is_numeric($i)) {
                     $this->Item[$i] = clone $this->Item[$i];
@@ -62,6 +61,5 @@ class Fields implements IteratorAggregate // Iterator
             }
 
         }
-
 }
 

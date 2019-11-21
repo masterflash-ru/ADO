@@ -7,8 +7,8 @@ namespace ADO\Service;
 
 use ADO\Service\Connection;
 use ADO\Entity\DataColumn;
-use ADO\Entity\DataColumns;
-use ADO\Entity\Fields;
+use ADO\Collection\DataColumns;
+use ADO\Collection\Fields;
 use ADO\Entity\Field;
 use ADO\Extend\Sort;
 use ADO\Extend\Parser;
@@ -61,19 +61,19 @@ class RecordSet implements Iterator
     protected $repositoryList=[];
     
     // перегруженное сво-ва
-    protected $container = ['maxrecords' => NULL,   // указывает максимальное  кол-во записей которые  помещаются в объект  recordset, по умолчанию  10, если 0  тогда считать все записи  в кеш
-                                            'sort' => '',     // сортировка ПОСЛЕ чтения из базы данных, из "order by ID desc" указывается только "ID desc"
-                                            'filter' => '',     // Выборка записей в рекордсете по условию, работает только при $this->_MaxRecords =0
-                                            'pagesize' => 10,     // кол-во записей в одной странице Этот параметр обрабатывает перегрузка, чтобы пересчитать кол-во страниц при изменении $PageSize
-                                            'absolutepage' => 0,     // положение указателя страниц (по сути это номера страниц  1-....) пересчитывается всегда!!!! (перегружено!!!!)
-                                            'bookmark' => '',     // уникальная строка для записи в базе данных
-                                            'cursorlocation' => NULL, 
-                                            'cursortype' => NULL, 
-                                            'locktype' => NULL, 
-                                            'source' => NULL,             // источник дaнных
-                                            'absoluteposition' => NULL,    // абсолютный номер записи 1..
-                                            
-                                            ];    
+    protected $container = [
+        'maxrecords' => null,       // указывает максимальное  кол-во записей которые  помещаются в объект  recordset, по умолчанию  10, если 0  тогда считать все записи  в кеш
+        'sort' => '',               // сортировка ПОСЛЕ чтения из базы данных, из "order by ID desc" указывается только "ID desc"
+        'filter' => '',             // Выборка записей в рекордсете по условию, работает только при $this->_MaxRecords =0
+        'pagesize' => 10,           // кол-во записей в одной странице Этот параметр обрабатывает перегрузка, чтобы пересчитать кол-во страниц при изменении $PageSize
+        'absolutepage' => 0,        // положение указателя страниц (по сути это номера страниц  1-....) пересчитывается всегда!!!! (перегружено!!!!)
+        'bookmark' => '',           // уникальная строка для записи в базе данных
+        'cursorlocation' => null,
+        'cursortype' => null,
+        'locktype' => null,
+        'source' => null,           // источник дaнных
+        'absoluteposition' => null, // абсолютный номер записи 1..
+    ];    
 
     private $stmt; // объект результата, в формате провайдера! хранит результат
 
@@ -91,9 +91,9 @@ class RecordSet implements Iterator
     private $columnCount; // кол-во колонок в таблице что бы не обращаться лишний раз в базу данных
 
     // хранит номер найденой записи в методе Find, нужно для реализации продолжения поиска
-    private $Finding_record = NULL;
+    private $Finding_record = null;
 
-    public $Find_Criteria_hash = NULL; // хеш критерия поиска, если он  изменится,  значит это поводо начать искать с  самого  начала
+    public $Find_Criteria_hash = null; // хеш критерия поиска, если он  изменится,  значит это поводо начать искать с  самого  начала
     
     private $add_new_metod = false; // true когда выполняется метод AddNew -  нужен  для верной обработки кеша записей
     private $records_in_buffer = 0; // кол-во реальных записей расположенных в  буфере
@@ -115,17 +115,17 @@ class RecordSet implements Iterator
     
     // хранит строку запроса для выборки, нужна для анализа возможности создания
     // SQL для записи/обновления через данный объект
-    private $CommandText=NULL;
+    private $CommandText=null;
     
     // хранит сгенерированные иснтрукции update и insert, если запрос сложный то
     // в массиве хранятся FALSE
     private $tpl_sql_update_insert=array('update'=>false,'insert'=>false);
-    private $primary_key=NULL;//
+    private $primary_key=null;//
     
-    private $RecordSetId = NULL; // внутренний идентификатор объекта, нужен для  организации временных файлов в процессе  работы
+    private $RecordSetId = null; // внутренний идентификатор объекта, нужен для  организации временных файлов в процессе  работы
     
     private $flag_create_xsdxml = false; // хфлаг генерации в одном файле схемы и xml
-    private $_create_xsdxml = NULL; // хранит экземпляр SimpleXmlInterator при генерации в одном файле схемы и xml
+    private $_create_xsdxml = null; // хранит экземпляр SimpleXmlInterator при генерации в одном файле схемы и xml
     
     //хранит контейнер сессии
     private $session;
@@ -148,12 +148,18 @@ class RecordSet implements Iterator
         $this->flag_create_xsdxml = false;
     }
 
-    public function Open ($Source = NULL, $ActiveConnect = NULL,  $Options = adCmdText)
+    public function Open ($Source = null, $ActiveConnect = null,  $Options = adCmdText)
     {
-        if ($this->State) throw new ADOException($this->ActiveConnect, 9, 'RecordSet:' . $this->RecordSetName, array('RecordSet'));
+        if ($this->State) {
+            throw new ADOException($this->ActiveConnect, 9, 'RecordSet:' . $this->RecordSetName, array('RecordSet'));
+        }
         // проверим Source: на входе либо текст запроса SQL, либо ссылка на объект Command
-        if ($Source instanceof Command)  $this->container['source'] = $Source; // сохраним  объект  это  или  строка  запроса
-        if (is_null($Source))  $this->container['source'] = NULL; // если ничего  нет на входу, так  же записываем NULL
+        if ($Source instanceof Command) {
+            $this->container['source'] = $Source; // сохраним  объект  это  или  строка  запроса
+        }
+        if (is_null($Source)) {
+            $this->container['source'] = null; // если ничего  нет на входу, так  же записываем null
+        }
         
         if ($this->ActiveCommand instanceof Command){
             $this->container['source'] = $this->ActiveCommand; // здесь и строка  запроса есть
@@ -191,7 +197,7 @@ class RecordSet implements Iterator
                     $this->container['source']->ActiveConnection =$cn;
                 }
                 //неверное обращение к объекту
-                //else throw new ADOException(NULL, 6, 'RecordSet:' . $this->RecordSetName, array('RecordSet'));
+                //else throw new ADOException(null, 6, 'RecordSet:' . $this->RecordSetName, array('RecordSet'));
             }
         }
         
@@ -211,11 +217,11 @@ class RecordSet implements Iterator
         }
                         
         // выполним запрос к провайдеру
-        $Parameters = NULL;
+        $Parameters = null;
         if (is_null($Options)) {
             $Options = adCmdText;
         }
-            // сделаем обращение в базу через объект command
+        // сделаем обращение в базу через объект command
         
         $a = $this->container['source']->Execute($RecordsAffected, $Parameters, $Options + adExecuteNoCreateRecordSet); // запрос  в  command,  а  он  вызывает  Execute  объекта  Command
         $this->stmt = $a['stmt'];
@@ -236,7 +242,8 @@ class RecordSet implements Iterator
                 $this->RecordSetName = $ColumnMeta['table'];// имя  объекта  равно  имени  таблицы  с  выборкой
             } else {$this->RecordSetName = "RecordSet";} // имя неизвестно
             $field = new Field($ColumnMeta);
-            $field->set_parent_recordset($this); // укажем объекту Field  родительский RecordSet,  что бы при  изменении в полях  вызывались функции  рекордсета
+            $field->RecordSetName=$this->RecordSetName;
+            $field->cursortype=$this->container['cursortype'];
             $this->Fields->Add($field); // отправим в коллецию
             
             // ---------------------------------------------------------данный
@@ -244,7 +251,7 @@ class RecordSet implements Iterator
             // генерируем коллекцию DataColumn
             $DataColumn = new DataColumn($this->Fields->Item[$i]->Name, $ColumnMeta);
             $this->DataColumns->Add($DataColumn);
-            $this->rez_array[0][$i] = NULL;
+            $this->rez_array[0][$i] = null;
         }
         //флаги изменения записей в буфере (ДО ОТПРАВКИ В БАЗУ)
         $this->rez_array[0]['status'] = [
@@ -254,7 +261,7 @@ class RecordSet implements Iterator
             'flag_canceled' => false,            //отмена всех изменений
             'BookMark' => "",                        //строка закладки
             'preserveptatus' => false,            //флаг отмены изменения этих флагов
-            'errors' => NULL,                        //коллекция ошибок в этой записи
+            'errors' => null,                        //коллекция ошибок в этой записи
             'flag_deleting'=>false                //true - запись удалена в базе, но в буфере еще болтается, эту запись нужно исключить из поиска и выдачи
         ];
         // $this->PageSize=$this->container['pagesize'];//инициализировать
@@ -329,19 +336,18 @@ class RecordSet implements Iterator
         // проверим флаг изменения текущей записи и если не пакетный режим сразу
         // обновим в базе данных
         $this->Finding_record=0;//очистим номер записи на которой стоит RS после поиска
-        if ($this->container['absoluteposition'] >=
-                 $this->AbsolutePosition_min_max[0] &&
-                 $this->container['absoluteposition'] <=
-                 $this->AbsolutePosition_min_max[1] &&
-                 $this->AbsolutePosition_min_max[0] > 0 &&
-                 $this->AbsolutePosition_min_max[1] > 0 &&
-                 $this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]]['status']['flag_change'] &&
-                 $this->container['locktype'] != adLockBatchOptimistic && // если
-                ! empty($this->stmt)
-                )
-                 { 
-                   $this->Update(); // внести изменения
-                }
+        $this->UpdateRsBufferFromFields();
+        if (
+            $this->container['absoluteposition'] >= $this->AbsolutePosition_min_max[0] &&
+            $this->container['absoluteposition'] <=  $this->AbsolutePosition_min_max[1] &&
+            $this->AbsolutePosition_min_max[0] > 0 &&
+            $this->AbsolutePosition_min_max[1] > 0 &&
+            $this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]]['status']['flag_change'] &&
+            $this->container['locktype'] != adLockBatchOptimistic &&
+            ! empty($this->stmt)
+        )  { 
+            $this->Update(); // внести изменения
+        }
         // проверим по типу курсора, можно ли переходить назад
         if ($this->container['cursortype'] == adOpenForwardOnly &&  $NewAbsolutePosition < $this->container['absoluteposition']) {
             throw new ADOException($this->ActiveConnect, 2,'RecordSet:' . $this->RecordSetName);
@@ -349,7 +355,7 @@ class RecordSet implements Iterator
                 
          for ($i = 0; $i < $this->columnCount; $i ++) {
              // очистить поля
-             $this->Fields->Item[$i]->set_value(NULL); // установить  в null  значения  полей
+             $this->Fields->Item[$i]->set_value(null); // установить  в null  значения  полей
          }
         if ($this->RecordCount == 0) { // если записей 0, тогда выходим
             $this->BOF = true;
@@ -472,7 +478,7 @@ class RecordSet implements Iterator
                                 'flag_new' => false, 
                                 'flag_canceled' => false,
                                 'flag_delete' => false, 
-                                'errors' => NULL,
+                                'errors' => null,
                                 'flag_deleting'=>false, 
                                 'preserveptatus' => false,
                                 'BookMark' => sprintf("%u", crc32(serialize($rez_array[$i])))
@@ -487,21 +493,21 @@ class RecordSet implements Iterator
                                 'flag_new' => false, 
                                 'flag_canceled' => false,
                                 'flag_delete' => false, 
-                                'errors' => NULL,
+                                'errors' => null,
                                 'flag_deleting'=>false, 
                                 'preserveptatus' => false,
-                                'BookMark' =>NULL
+                                'BookMark' =>null
                             ]; // атрибуты  записей
                         }
                     } else {
-                        $rez_array[$i] = array_fill(0, $this->columnCount, NULL);
+                        $rez_array[$i] = array_fill(0, $this->columnCount, null);
                         $rez_array[$i]['status'] = [
                             'flag_delete' => false, 
                             'flag_change' => false,
                             'flag_new' => true, 
                             'flag_canceled' => false,
                             'flag_delete' => false, 
-                            'errors' => NULL, 
+                            'errors' => null, 
                             'flag_deleting'=>false, 
                             'preserveptatus' => false, 
                             'BookMark' => sprintf("%u", crc32(md5($i . microtime())))
@@ -558,7 +564,7 @@ class RecordSet implements Iterator
                         'flag_change' => false, 
                         'flag_new' => false, 
                         'flag_canceled' => false, 
-                        'errors' => NULL, 
+                        'errors' => null, 
                         'preserveptatus' => false, 
                         'flag_deleting'=>false, 
                         'BookMark' => sprintf("%u", crc32(serialize($rez_array[$i])))
@@ -577,7 +583,7 @@ class RecordSet implements Iterator
         }
     }
 
- public function AddNew ($Fields = NULL, $Values = NULL)
+ public function AddNew ($Fields = null, $Values = null)
     { 
     /*  начать  ввод  новой  записи,  предварительно  надо  сделать  запрос  для  получения  коллекции  полей  
     $Fields  - имя  поля или  массив  полей  $Values  -  значение  или  массив  значений,  
@@ -592,7 +598,7 @@ class RecordSet implements Iterator
      $this->add_new_metod = true;
      // создаем структуру с колонками таблицы
      $this->RecordCount ++; // увеличить кол-во записей на 1
-     $new = array_fill(0, $this->columnCount, NULL);
+     $new = array_fill(0, $this->columnCount, null);
     // создаем флаги для данной записи
      $new['status'] = [
          'flag_change' => false, 
@@ -600,13 +606,13 @@ class RecordSet implements Iterator
          'flag_canceled' => false, 
          'flag_delete' => false, 
          'preserveptatus' => false, 
-         'errors' => NULL, 
+         'errors' => null, 
          'flag_deleting'=>false,
          'BookMark' => sprintf("%u",  crc32($this->RecordCount . microtime()))
      ];
      
      array_push($this->rez_array, $new);
-     $this->Find_Criteria_hash=NULL;    //сбросить флаг поичка, что бы если что искать с самого начала м учитывать новую запись
+     $this->Find_Criteria_hash=null;    //сбросить флаг поичка, что бы если что искать с самого начала м учитывать новую запись
      $this->AbsolutePosition_min_max[1] ++;
      // если это совсем первая запись, то надо имитировать верные краевые границы буфера обмена
      if (empty($this->AbsolutePosition_min_max[0])) {
@@ -624,12 +630,13 @@ class RecordSet implements Iterator
                  if (isset($Values[$k])) {
                      $this->Fields->Item[$f[$Field_]]->Value = $Values[$k];
                  } else {
-                     $this->Fields->Item[$f[$Field_]]->Value = NULL;
+                     $this->Fields->Item[$f[$Field_]]->Value = null;
                  }
              }
          } else {
              $this->Fields->Item[$f[$Fields]]->Value = $Values;
          }
+         $this->UpdateRsBufferFromFields();
          // удалим флаг изменения записи! этот флаг устанавливается т.к. меняем вроде существующую запись, но это не так!
          $this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]]['status']['flag_change'] = false;
          $this->rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]]['status']['flag_new'] = true;
@@ -643,7 +650,7 @@ class RecordSet implements Iterator
      $this->add_new_metod = false;
  }
 
- public function Update ($Fields = NULL, $Values = NULL)
+ public function Update ($Fields = null, $Values = null)
 { // обновление текущей записи
      if (! empty($Fields)) {
          // задано поле/ля
@@ -660,6 +667,7 @@ class RecordSet implements Iterator
      if ($this->AbsolutePosition_min_max[0] == 0 ||  $this->AbsolutePosition_min_max[1] == 0) {
          return;
      }
+     $this->UpdateRsBufferFromFields();
      // проверим флаги модификации, если нет модификации, просто выходим
      if (count( array_intersect( array('flag_change', 'flag_new', 'flag_delete'),  array_keys($this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]]['status'],  true))) == 0)  {
          return;
@@ -681,7 +689,7 @@ class RecordSet implements Iterator
          array_combine( $this->get_field_name_false, $new), $status); // сгенерировать
      $RecordsAffected = 0;
      try {
-         $this->container['source']->ActiveConnection->Execute($sql['sql'], $RecordsAffected, adExecuteNoRecords, NULL); // просто исполинть  и все
+         $this->container['source']->ActiveConnection->Execute($sql['sql'], $RecordsAffected, adExecuteNoRecords, null); // просто исполинть  и все
          // в случае удачи очищаем флаги модификации
          if (! $this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]]['status']['preserveptatus']) {
              // если установлен флаг запрета модификации флагов, то не изменять их, иначе заменить
@@ -755,7 +763,7 @@ public function UpdateBatch ($AffectRecords = adAffectAllChapters, $PreserveStat
     $this->MoveFirst();
     if (! $MultiInsert) { 
         // стандартная  обработка,  обновление  метобом  перебора  всех  записей  в  RS
-        $ADOException = NULL;
+        $ADOException = null;
         while (! $this->EOF)  {
             // обновляем,  если  ошибка  то  запишем  ееtry
             try {
@@ -844,7 +852,7 @@ public function UpdateBatch ($AffectRecords = adAffectAllChapters, $PreserveStat
     if (count($sql_s)) { 
         // новые  записи  были  готовим  SQL,  для  типа  inset  обработка  отличается,  там  накапливаем  что  бы  все  вместить  в  одну  инструкцию  SQL
         $sql_rez = [];
-        $sql_insert_start = NULL;
+        $sql_insert_start = null;
         $sql_insert_values = [];
         foreach ($sql_s as $k => $v)  {
             switch ($v['type']) {
@@ -916,7 +924,7 @@ public function Close ()
 { // удаляет  объект  рекордсет, и  освобождает  память, в драйвере вызывается Close для освобождения, актуально для процедур в MySql
     $this->State = 0;
     $this->container['source']->ActiveConnection->driver->Close($this->stmt);
-    $this->stmt = NULL;
+    $this->stmt = null;
     $this->rez_array = [];
     $this->old_rez_array = [];
     $this->temp_rez_array = array('sort' => [],     'filter' => []);
@@ -1028,7 +1036,7 @@ public function Find ($Criteria, $SkipRows = 0,  $SearchDirection = adSearchForw
     }
 }
 
-public function GetRows ( $Rows = adGetRowsRest,   $Start = NULL,  $Field = NULL)
+public function GetRows ( $Rows = adGetRowsRest,   $Start = null,  $Field = null)
 { // вернуть массив значений
 /*
 
@@ -1110,7 +1118,7 @@ public function Requery ($Options = adCmdText)
 
 }
 
-public function WriteXml ($destination = NULL, $WriteMode = DiffGram)
+public function WriteXml ($destination = null, $WriteMode = DiffGram)
 {
     $x = new AdoXml();
     $io = new stdClass();
@@ -1133,7 +1141,7 @@ public function GetXml ()
 
 }
 
-public function ReadXmlSchema ($source = NULL)
+public function ReadXmlSchema ($source = null)
 { // настраивает RS в соответсвии со схемой $source - либо строка с самой схемой либо имя файла
     if (empty($source)) {
         return; // ничего  не  делаем
@@ -1167,7 +1175,7 @@ public function GetXmlSchema ()
 }
 
 
-public function ReadXml ($source = NULL, $ReadMode = ADO::DiffGram)
+public function ReadXml ($source = null, $ReadMode = ADO::DiffGram)
 {
     if (empty(    $source))    throw new ADOException(    $this->ActiveConnect,     10, 'RecordSet:' .$this->RecordSetName); // неоткуда считывать данные
     $x =new AdoXml();
@@ -1185,7 +1193,7 @@ public function ReadXml ($source = NULL, $ReadMode = ADO::DiffGram)
     return $x->ReadXml($io);
 }
 
-public function WriteXmlSchema ($destination = NULL)
+public function WriteXmlSchema ($destination = null)
 { // аналогично GetXmlSchema(), но выводит в destination
     $xsd = $this->GetXmlSchema();
     if (is_string($destination)){
@@ -1201,7 +1209,7 @@ public function Supports ()
     throw new ADOException($this->ActiveConnect, 1, 'RecordSet:' .    $this->RecordSetName,   array(  '*'));
 }
                 
-// ---------------------------
+
 private function rez_array2Field ($rez)
 {
 /*
@@ -1340,7 +1348,7 @@ $do_update - флаг немедленного внесения в базу (tru
 public function persist($entity,$do_update=true)
 {
     if (!is_object($entity)) {//не допустимый тип
-        throw new ADOException(NULL, 26,NULL, [gettype($entity)] );
+        throw new ADOException(null, 26,null, [gettype($entity)] );
     }
     $r=$this->getRepository(get_class($entity))->persist($entity);
     if ($do_update) {$this->Update();}
@@ -1380,7 +1388,7 @@ public function FetchEntity($entityName)
 */
 private function getRepository($entityName)
 {
-    if (!is_string($entityName)) {throw new ADOException(NULL, 20 );}//не допустимый тип
+    if (!is_string($entityName)) {throw new ADOException(null, 20 );}//не допустимый тип
     if (isset($this->repositoryList[$entityName])) {
             return $this->repositoryList[$entityName];
         }
@@ -1434,37 +1442,34 @@ private function get_field_name ($type = false)
     return $field_name;
 }
 
-private function change_value (Field $field_obj)
-{ // вызывается  когда  меняем  сво-во  Value  в  объекте  Field,  на  входе  экземпляр  объекта  Field
-     if ($this->container['cursortype'] == adOpenForwardOnly) {
-         throw new ADOException( $this->ActiveConnect, 5, 'RecordSet:' . $this->RecordSetName);
-     }
-    $number = $this->get_field_name_true; // получить имена
+/**
+* если бвли изменения в Field, тогда меняем внутренний буфер RS
+*/
+protected function UpdateRsBufferFromFields()
+{
+    $fields=$this->get_field_name_true;
+    foreach ($fields as $Field) {
+        if ( $this->Fields->Item[$Field]->isChange() ) {
+            $Value=$this->Fields->Item[$Field]->Value ;
+            
+            if (!isset($this->old_rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]])) {
+                $this->old_rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]] = $this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]];
+            }
 
-    // получить  ключ  в  массиве  $this->rez_array  который  будем  модифицировать  сохраним  старое  значение,  что  бы  можно  было  
-    //найти  старую  запись  в  базе,либо  откатить  измеенения
-    $key = $number[$field_obj->Name]; 
+            $this->old_rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]][$Field] = $this->rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]][$Field];
+            // сохраним  старое знаечние (оригинальное)
+            //$field_obj->OriginalValue = $this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]][$Field];
 
-    //проверим, если новое значение отлично от старого, тогда меняем, если тоже самое, тогда нет! 
-    if ($field_obj->Value ===$this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]][$key]) {
-        return;
+            $this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]][$Field] = $Value; 
+            // присвоить  новое  значение  изменим  статус  записи  на  "модифицированная"  только  в  том  случае,  если  это  не  новая  запись
+             if (! $this->rez_array[$this->container['absoluteposition'] -  $this->AbsolutePosition_min_max[0]]['status']['flag_new']){
+                  $this->rez_array[$this->container['absoluteposition'] -  $this->AbsolutePosition_min_max[0]]['status']['flag_change'] = true;
+            }
+        }
     }
 
-    if (!isset($this->old_rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]])) {
-        $this->old_rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]] = $this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]];
-    }
-
-    $this->old_rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]][$key] = $this->rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]][$key];
-    // сохраним  старое знаечние (оригинальное)
-    $field_obj->OriginalValue = $this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]][$key];
-
-    $this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]][$key] = $field_obj->Value; 
-    // присвоить  новое  значение  изменим  статус  записи  на  "модифицированная"  только  в  том  случае,  если  это  не  новая  запись
-     if (! $this->rez_array[$this->container['absoluteposition'] -  $this->AbsolutePosition_min_max[0]]['status']['flag_new']){
-          $this->rez_array[$this->container['absoluteposition'] -  $this->AbsolutePosition_min_max[0]]['status']['flag_change'] = true;
-     }
 }
-
+    
 private function set_status ()
 { // установка  кодов  статуса  исходя  из  внутреннего  массива  статусов
     $this->Status = 0;
@@ -1628,7 +1633,7 @@ public function _get_rec_error ()
     if (isset($this->rez_array[$this->container['absoluteposition'] - $this->AbsolutePosition_min_max[0]])) {
         return $this->rez_array[$this->container['absoluteposition'] -$this->AbsolutePosition_min_max[0]]['status']['errors'];
     } else {
-        return NULL;
+        return null;
     } 
 }
 

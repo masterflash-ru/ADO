@@ -2,13 +2,15 @@
 
 namespace ADO\Exception;
 use ADO\Connection;
-use ADO\Entity\Collections;
+use ADO\Collection\Collections;
+use SimpleXMLIterator;
+use RuntimeException;
 
-class ADOException extends \RuntimeException
+class ADOException extends RuntimeException
 {
     public $errors; // коллекция ошибок ADO
     public static $ADOMessage;
-    public function __construct ($connection = NULL, $code = 0, $source = 'not known',     $m_a = array())
+    public function __construct ($connection = null, $code = 0, $source = 'not known',$m_a =[])
     { /*
        * $connection - ссылка на объект Connection, в его коллекцию будет
        * записана ошибка перед выбросом исключения, если $connection не
@@ -55,20 +57,18 @@ class ADOException extends \RuntimeException
                                 );
             }
         }
-        // инициализировать родительский объект
-        
         parent::__construct($text, $code);
     }
 
 
 
-private  static function GetADOMessage ($code = 0, $m_a = array())
+private  static function GetADOMessage ($code = 0, $m_a = [])
 { // для внутренних целей - получает текст сообщения по его номеру, из файла с сообщениями, в зависимости от локали
     if (empty(self::$ADOMessage)) {
         if (! file_exists(__DIR__ . '/../Data/' . ADO_LOCALE . '.xml')) {
             echo "Fatal error! File ".__DIR__ . '/../Data/' . ADO_LOCALE . '.xml not found!';
         } else {
-            self::$ADOMessage = new \SimpleXMLIterator(__DIR__ . '/../Data/' . ADO_LOCALE . '.xml', NULL, true);
+            self::$ADOMessage = new SimpleXMLIterator(__DIR__ . '/../Data/' . ADO_LOCALE . '.xml', NULL, true);
         }
     }
     

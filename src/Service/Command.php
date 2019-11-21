@@ -2,7 +2,7 @@
     
 namespace ADO\Service;
 
-use ADO\Entity\Parameters;
+use ADO\Collection\Parameters;
 use ADO\Exception\ADOException;
 use ADO\Entity\Parameter;
 
