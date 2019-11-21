@@ -8,7 +8,7 @@ use ADO\Entity\Parameter;
 
 // --------------------- COMMAND -параметрические зхапросы
 class Command
-{ // Представляет оператор SQL или хранимую процедуру, применяемую  к источнику  данных.
+{
     
     public $CommandText; // Возвращает или задает оператор SQL или хранимую  процедуру, выполняемую над источником данных.
     public $CommandType; // Возвращает значение, указывающее, как  интерпретируется свойство CommandText
@@ -30,27 +30,27 @@ public function __construct ($CommandText = '')
         $this->CommandType=adCmdText;//для совместимости вносим это значение
         //технологический массив
         $this->ParameterType=[
-                              adEmpty,
-                              adSmallInt,
-                              adInteger,
-                              adSingle,
-                              adDouble,
-                              adCurrency,
-                              adError,
-                              adBoolean,
-                              adDecimal,
-                              adTinyInt,
-                              adUnsignedTinyInt,
-                              adUnsignedSmallInt,
-                              adUnsignedInt,
-                              adBigInt,
-                              adUnsignedBigInt,
-                              adBinary,
-                              adChar,
-                              adUserDefined,
-                              adDBDate,
-                              adDBTime,
-                              adDBTimeStamp
+            adEmpty,
+            adSmallInt,
+            adInteger,
+            adSingle,
+            adDouble,
+            adCurrency,
+            adError,
+            adBoolean,
+            adDecimal,
+            adTinyInt,
+            adUnsignedTinyInt,
+            adUnsignedSmallInt,
+            adUnsignedInt,
+            adBigInt,
+            adUnsignedBigInt,
+            adBinary,
+            adChar,
+            adUserDefined,
+            adDBDate,
+            adDBTime,
+            adDBTimeStamp
         ];
     }
 

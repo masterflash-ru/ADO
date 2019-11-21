@@ -18,6 +18,7 @@ use ADO\Service\Command;
 use stdClass;
 use Iterator;
 use ADO\Entity\EntityRepository;
+use ADO\Entity\Universal;
 
 
 class RecordSet implements Iterator
@@ -47,15 +48,15 @@ class RecordSet implements Iterator
     // перегруженное сво-во MaxRecords, менять можно только до открытия объекта
     // private $_MaxRecords;
 
-    public $RecordCount = 0; // кол-во записей в объекте recordSet
-    public $Source; // сама строка подключения к базе или экземпляр объетка  // command()
-    public $Status; // подробнее http://www.xtramania.com/Documentation/ADOxtra/Reference/Enums/RecordStatusEnum/
-    public $Fields; // коллекция объектов Field
-    public $Properties; // коллекция свойств объекта (пока пустоая коллекция)
-    public $State; // состояние объекта 1-открытый, действительный, 0-закрытый
+    public $RecordCount = 0;        // кол-во записей в объекте recordSet
+    public $Source;                 // сама строка подключения к базе или экземпляр объетка  // command()
+    public $Status;                 // подробнее http://www.xtramania.com/Documentation/ADOxtra/Reference/Enums/RecordStatusEnum/
+    public $Fields;                 // коллекция объектов Field
+    public $Properties;             // коллекция свойств объекта (пока пустоая коллекция)
+    public $State;                  // состояние объекта 1-открытый, действительный, 0-закрытый
 
-    public $RecordSetName; // имя данного рекорд сета (это в ADO NET) нужно для  генерации XML
-    public $DataColumns; // коллекция объектов DataColumn
+    public $RecordSetName;          // имя данного рекорд сета (это в ADO NET) нужно для  генерации XML
+    public $DataColumns;            // коллекция объектов DataColumn
 
     /*кеш экземпляров EntityRepository*/
     protected $repositoryList=[];
@@ -75,9 +76,9 @@ class RecordSet implements Iterator
         'absoluteposition' => null, // абсолютный номер записи 1..
     ];    
 
-    private $stmt; // объект результата, в формате провайдера! хранит результат
+    private $stmt;                  // объект результата, в формате провайдера! хранит результат
 
-    private $rez_array = []; // хранит массив результата, кол-во элементов  определеячется размером _MaxRecords
+    private $rez_array = [];        // хранит массив результата, кол-во элементов  определеячется размером _MaxRecords
 
     // хранит старое значение $rez_array, когда мы редактируем записи, эти  значения нужны что бы в условии SQL  выбрать  верную запись, хранится не все, а только
     //  МОДИФИЦИРОВАННЫЕ записи, ключи идентичны
@@ -111,7 +112,7 @@ class RecordSet implements Iterator
     private $get_field_name_false = [];
     
     // массив имен полей
-    private $columnNames=[];//имена колонок
+    private $columnNames=[];        //имена колонок
     
     // хранит строку запроса для выборки, нужна для анализа возможности создания
     // SQL для записи/обновления через данный объект
@@ -120,9 +121,9 @@ class RecordSet implements Iterator
     // хранит сгенерированные иснтрукции update и insert, если запрос сложный то
     // в массиве хранятся FALSE
     private $tpl_sql_update_insert=array('update'=>false,'insert'=>false);
-    private $primary_key=null;//
+    private $primary_key=null;
     
-    private $RecordSetId = null; // внутренний идентификатор объекта, нужен для  организации временных файлов в процессе  работы
+    private $RecordSetId = null;    // внутренний идентификатор объекта, нужен для  организации временных файлов в процессе  работы
     
     private $flag_create_xsdxml = false; // хфлаг генерации в одном файле схемы и xml
     private $_create_xsdxml = null; // хранит экземпляр SimpleXmlInterator при генерации в одном файле схемы и xml
@@ -1351,7 +1352,9 @@ public function persist($entity,$do_update=true)
         throw new ADOException(null, 26,null, [gettype($entity)] );
     }
     $r=$this->getRepository(get_class($entity))->persist($entity);
-    if ($do_update) {$this->Update();}
+    if ($do_update) {
+        $this->Update();
+    }
 }
 
 
@@ -1360,8 +1363,11 @@ public function persist($entity,$do_update=true)
 $entityName - Имя объекта куда будет все грузиться с позиции на которую указывается в RS
 возвращает массив этих объектов
 */
-public function FetchEntityAll($entityName)
+public function FetchEntityAll($entityName=null)
 {
+    if (empty($entityName)){
+        $entityName=Universal::class;
+    }
     return $this->getRepository($entityName)->FetchEntityAll();
 }
 
@@ -1370,8 +1376,11 @@ public function FetchEntityAll($entityName)
 $entityName - Имя объекта куда будет все грузиться
 возвращает заполненный объект, данными на который указывает в RS
 */
-public function FetchEntity($entityName)
+public function FetchEntity($entityName=null)
 {
+    if (empty($entityName)){
+        $entityName=Universal::class;
+    }
     return $this->getRepository($entityName)->FetchEntity();
 }
 
@@ -1388,10 +1397,12 @@ public function FetchEntity($entityName)
 */
 private function getRepository($entityName)
 {
-    if (!is_string($entityName)) {throw new ADOException(null, 20 );}//не допустимый тип
+    if (!is_string($entityName)) {
+        throw new ADOException(null, 20 );
+    }//не допустимый тип
     if (isset($this->repositoryList[$entityName])) {
-            return $this->repositoryList[$entityName];
-        }
+        return $this->repositoryList[$entityName];
+    }
     $this->repositoryList[$entityName] =new EntityRepository($this,$entityName);
     return $this->repositoryList[$entityName];
 }
@@ -1613,7 +1624,9 @@ public function __set ($var, $value)
 public function &__get ($var)
  {
     $var = strtolower($var);
-    if (array_key_exists( $var, $this->container)) {return $this->container[$var];}
+    if (array_key_exists( $var, $this->container)) {
+        return $this->container[$var];
+    }
     $arr = debug_backtrace();
     trigger_error("Undefined property: RecordSet::\$$var in " . $arr[0]['file'] . " on line " . $arr[0]['line'], E_USER_WARNING);
       return $this->container['absolutepage'];

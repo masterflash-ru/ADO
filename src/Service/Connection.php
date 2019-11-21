@@ -10,15 +10,12 @@ use ADO\Exception\ADOException;
 конструктор генерации объекта Connection ADO
 */
 class Connection
-{ // объект cоnnection - содинение к базе данных текущего провайдера
-    public $version = "1.02";
-
+{
     public $ConnectionString; // Возвращает или задает строку, используемую для открытия базы данных.
     public $Database; // Получает имя текущей базы данных или базы данных,которая будет использоваться после открытия подключения.
     public $DefaultDatabase; // имя текущей базы данных
     public $DataSource; // /Получает имя сервера или имя файла источника данных.
     public $Provider; // Получает имя поставщика OLE DB, указанное в выражении "Provider= " строки подключения.
-    public $ServerVersion; // Получает строку, содержащую номер версии сервера,к которому подключается клиент.
     
     public $State = 0; // Получает текущее состояние подключения. Серия констант adState*
     
@@ -27,8 +24,6 @@ class Connection
     
     public $Mode; // тип соединения, определяется константтами серии adMode*
     
-    private $event = array();
-
     private $connect_link; // объект/ресурс - соединения с базой данных
     
     public $driver; // сам объект для работы с базой данных
@@ -41,11 +36,6 @@ class Connection
         $this->Mode = adModeUnknown; // неопределенное состояние типа соединенения, разрешено чтение и запись
         $this->Errors = new Collections(); // объект-интератор ошибок объекта connect
         $this->Properties = new Collections(); // свой-ва соединения/сервера определяем события по умолчанию
-        $this->event['ConnectComplete'] = array($this, 'ConnectComplete'); // по  умолчанию  это  заглушка
-        $this->event['infoMessage'] = array($this, 'infoMessage'); // по умолчанию это заглушка
-        $this->event['Disconnect'] = array($this, 'Disconnect'); // по  умолчанию  это  заглушка
-        $this->event['WillConnect'] = array($this, 'WillConnect'); // по умолчанию это заглушка
-        $this->event['ExecuteComplete'] = array($this, 'ExecuteComplete'); // по умолчанию это заглушка
         $this->container['cursorlocation'] = adUseServer; // по умолчанию курсор на стороне сервера
         if (!empty($Provider)) {
             $this->Provider=$Provider;
@@ -89,16 +79,13 @@ public function Open ($server = '', $user = '', $password = '', $database = '')
     }
     // драйвер так и не определился, ошибка
     if (! $this->driver) {
-        call_user_func($this->event['infoMessage'], $this->Errors, adStatusErrorsOccurred, $this); // генерироватьсобатиеinfoMessage
         throw new ADOException($this, 1, 'Connection:', array($this->Provider));// ошибка, драйвер не найден
     }
-    call_user_func_array($this->event['WillConnect'], array(&$this->ConnectionString, &$dsna['user'], &$dsna['pass'],     NULL, adStatusOK, &$this)); // генерировать событие WillConnect
 
     $status_array = $this->driver->connect($dsna); // открыть соединение, возвращает массив 3 элемента
     if ($status_array['number'] == 0) {
         // все хорошо
         $this->State = adStateOpen; // обхъект открыт
-        call_user_func($this->event['ConnectComplete'], $this->Errors, adStatusOK, $this); // генерировать собатие ConnectComplete
         $this->connect_link = $status_array['connect_link']; // соединение  с  базой  данных  получить  информацию  о  подключении
         $arr = $this->driver->get_server_Properties($this->connect_link);
         $this->Properties = new Propertys(); // получить экземпляр объекта Propertys
@@ -107,9 +94,6 @@ public function Open ($server = '', $user = '', $password = '', $database = '')
         }
     } else {
         unset($status_array['connect_link']);
-        // генерируем событие и передаем ошибки
-        call_user_func($this->event['infoMessage'], $this->Errors, adStatusErrorsOccurred, $this); // генерировать собатие infoMessage
-        call_user_func($this->event['ConnectComplete'], $this->Errors, adStatusErrorsOccurred, $this); // генерировать собатие ConnectComplete
         $this->Errors->add([
             'number' => $status_array['number'],
             'description' => $status_array['description'],
@@ -161,25 +145,9 @@ public function Execute ($CommandText, &$RecordsAffected = 0, $Options = adCmdTe
             'NativeError' => $rez['error']->getMessage()
         )
                           ); // ошибка, какая-то проблема в запросе, запишем в коллекцию
-        call_user_func_array($this->event['ExecuteComplete'], 
-                             array($rez['RecordsAffected'],         //затронуто рядов
-                                   $this->Errors,                            //коллекция ошибок
-                                   adStatusErrorsOccurred,//флаг ошибки
-                                   NULL,                                        //ссылка на объект Command
-                                   NULL,                                        //ссыдка на RecordSet
-                                   &$this                                        //ссылка на объект Connection
-                                  )); // генерировать событие ExecuteComplete
         throw new ADOException($this); // вызвать исключение
     }
     $RecordsAffected = $rez['RecordsAffected'];
-    call_user_func_array($this->event['ExecuteComplete'], 
-                         array($rez['RecordsAffected'],         //затронуто рядов
-                               $this->Errors,                            //коллекция ошибок
-                               adStatusOK,//флаг ошибки
-                               NULL,                                        //ссылка на объект Command
-                               NULL,                                        //ссыдка на RecordSet
-                               &$this                                        //ссылка на объект Connection
-                              )); // генерировать событие ExecuteComplete
     if ($Options & adExecuteNoRecords) {
         return true;
     } else {
@@ -206,63 +174,6 @@ public function Close ()
     { // Закрывает подключение к источнику данных.
         $this->State = adStateClosed;
         $this->driver->Close(); // закрыть соединение с базой
-        call_user_func($this->event['Disconnect'], adStateClosed,     adStatusErrorsOccurred, $this); // генерировать собатие ConnectComplete
-    }
-    
-    // ------------------------------------------------------------------
-    // СОБЫТИЯ
-    // *************** событие ConnectComplete
-    public function ConnectComplete ($pError, $adStatus, $pConnection)
-    { // событие происходит,когда произошло  соединения
-        /*
-         * здесь это заглушка, но можно определить $pError - объект коллекции
-         * ошибок $adStatus - статус, см. константы серии adStatus* $pConnection
-         * - данный объект (connection)
-         */
-        // echo 'событие ConnectComplete-'.$adStatus;
-    }
-    
-    // *************** событие infoMessage
-    public function infoMessage ($pError, $adStatus, $pConnection)
-    { // событие  происходит,  когда  произошло  ошибка  соединения
-        /*
-         * здесь это заглушка, но можно определить $pError - объект коллекции
-         * ошибок $adStatus - статус, см. константы серии adStatus* $pConnection
-         * - данный объект (connection)
-         */
-    }
-
-    public function Disconnect ($adStatus, $pConnection)
-    { //
-        /*
-         * здесь это заглушка, но можно определить Событие возникает после того,
-         * как прервано подключение к источнику данных. Параметры аналогичны
-         * параметрам события ConnectComplete.
-         */
-    }
-
-    public function WillConnect (&$ConnectionString, &$UserID, &$Password, $Options, $adStatus, $pConnection)
-    { //
-        /*
-         * здесь это заглушка, но можно определить Событие возникает перед тем,
-         * как осуществлено подключение к источнику данных. Параметры в основном
-         * аналогичны параметрам события ConnectComplete. Options -
-         * зарезервировано. В обработчике события можно изменять параметры
-         * подключения.
-         */
-    }
-
-    public function ExecuteComplete ($RecordsAffected, $pError, $adStatus,     $pCommand, $pRecordset, $pConnection)
-    { //
-        /*
-         * здесь это заглушка, но можно определить Событие происходит после
-         * завершения работы команды. Параметр RecordsAffected - целое число
-         * (long) - содержит количество записей, которые затрагивает команда.
-         * Остальные параметры аналогичны одноимённым параметрам описанных выше
-         * других событий. Событие ExecuteComplete может произойти вследствие
-         * вызовов Connection.Execute, Command.Execute, Recordset.Open,
-         * Recordset.Requery или Recordset.NextRecordset.
-         */
     }
     
     // ***************************************** вспомогательные внутренние
