@@ -104,7 +104,19 @@ public function Open ($server = '', $user = '', $password = '', $database = '')
         throw new ADOException($this); // добавим в колекцию ошибок данные и вызовим исключение
     }
 }
-
+    
+    
+/**
+* получить ZF3 адаптер базы
+* нужно, если мы захотим работать с базой в стиле ZF3 
+* запрос отправляем в драйвер напрямую, т.к. какой драйвер ZF3 нужно использовать определяется там
+*/
+public function getZfAdapter()
+{
+    return $this->driver->getZfAdapter($this->connect_link);
+}
+    
+    
 public function Execute ($CommandText, &$RecordsAffected = 0, $Options = adCmdText, $parameters = NULL)
     { // исполняет  запросы,  возвращает  кол-во  рядов  затронутых  при  исполнении
         /*

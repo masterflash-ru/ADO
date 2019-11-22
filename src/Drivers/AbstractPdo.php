@@ -6,6 +6,9 @@ namespace ADO\Drivers;
 
 use ADO\Exception\ADOException;
 use PDO;
+use Zend\Db\Adapter\Driver\Pdo\Pdo as ZfPdoDriver;
+use Zend\Db\Adapter\Adapter;
+
 
 class AbstractPdo
 {
@@ -328,6 +331,15 @@ return $rez;
 }
 */
 
+/**
+* получить ZF3 адаптер базы
+* нужно, если мы захотим работать с базой в стиле ZF3 
+*/
+public function getZfAdapter(Pdo $connect_link)
+{
+    $driver=new ZfPdoDriver($connect_link);
+    return new Adapter($driver);  
+}
 
 /*
 * для внутренних нужд параметры в SQL, массив объектов $parametrs: [0]
