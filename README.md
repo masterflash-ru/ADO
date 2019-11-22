@@ -69,4 +69,20 @@ $rs->persist(Объект_сущности);
 $connection=$container->get('DefaultSystemDb');
 $adapter=$connection->getZfAdapter();
 ```
-все возможности работы штатного Zend-Db читайте в документации к нему
+все возможности работы штатного Zend-Db читайте в документации к нему.
+
+пример работы с абстракциями в стиле Zend-Db:
+```php
+use Zend\Db\Sql\Sql;
+
+//$connection - экземпляр Connection пакета ADO, полученный например, в фабрике
+$adapter=$connection->getZfAdapter();
+$sql    = new Sql($adapter);
+$select = $sql->select();
+$select->from('admin_menu');
+$select->where(['id' => 1]); //выбираем запись для id=1
+$selectString = $sql->buildSqlString($select); //получим результирующцю строку SQL запроса
+//можно дальше как принято в ZF3, можно передать строку в RecordSet пакета ADO, или вызвать Execute, который вернет RecordSet
+$rs=$connection->Execute($selectString);
+var_dump($rs->Fields);
+```
