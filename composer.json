@@ -12,7 +12,9 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "php": "^7.1"
+        "php": "^7.1",
+        "zendframework/zend-hydrator": "^2.4",
+        "zendframework/zend-db": "^2.10"
     },
     "autoload": {
         "psr-4": {
