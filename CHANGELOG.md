@@ -13,6 +13,10 @@
 ### Changed
 
 ### Deprecated
+Применялись в самой первой версии, оставлены для совместимости старых конфинураций.
+- $connection=$container->get('ADOConnection');
+- $connection=$container->get('ADO\Connection');
+- $connection=$container->get('ADOdb');
 
 ### Removed
 

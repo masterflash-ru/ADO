@@ -54,6 +54,9 @@ $rs->Open("select * from admins",$this->connection);
 //получаем массив заполненых сущностей, если не указывать объект, то будет возвращет внутренний универсальный
 $user = $rs->FetchEntityAll(Admins::class);
 
+//аналогично, используется внутренний объект-сущность Universal
+$user = $rs->FetchEntityAll();
+
 //получить один элемент
 $user = $rs->FetchEntity(Admins::class);
 
@@ -62,7 +65,7 @@ $rs->persist(Объект_сущности);
 ```
 Заполненый RecordSet можно перебирать циклом foreach, RecordSet стал реализовывать интерфейс Iterator
 
-Вы можете работать в стиле Zend-Db для этого установите его composer require zendframework/zend-db
+Вы можете работать в стиле Zend-Db
 
 Создавать новое подключение не требуется, ADO вернет уже инициализированный объект Adapter:
 ```php
