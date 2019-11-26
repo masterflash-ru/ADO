@@ -5,6 +5,8 @@ namespace ADO\Service;
 use ADO\Collection\Parameters;
 use ADO\Exception\ADOException;
 use ADO\Entity\Parameter;
+use Zend\Db\Sql\Sql;
+use Zend\Db\Sql\SqlInterface;
 
 // --------------------- COMMAND -параметрические зхапросы
 class Command
@@ -67,7 +69,15 @@ public function Execute (&$RecordsAffected = 0, &$Parameters = NULL,   $Options 
             $this->ActiveConnection = new Connection(); // новый экземпляр объекта коннекта
             $this->ActiveConnection->ConnectionString = $dsn; // строка соединения
             $this->ActiveConnection->Open(); // открыть соединение
-        }
+    }
+    //проверим на объект select,insert,update,delete  из ZF3
+    if ($this->CommandText instanceof SqlInterface) {
+        $adapter=$this->ActiveConnection->getZfAdapter();
+       //преобразуем в строку SQL
+        $sql    = new Sql($adapter);
+        $this->CommandText=$sql->buildSqlString($this->CommandText);
+    }
+
     $this->ActiveConnection->driver->NamedParameters = $this->NamedParameters; // флаг передачи параметров по номерам или по именам
     // проверим, парсили ли мы запрос или нет
         if (count($this->sql_item) < 1) {

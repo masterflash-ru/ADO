@@ -74,15 +74,21 @@ $adapter=$connection->getZfAdapter();
 пример работы с абстракциями в стиле Zend-Db:
 ```php
 use Zend\Db\Sql\Sql;
+use Zend\Db\Sql\Select;
 
 //$connection - экземпляр Connection пакета ADO, полученный например, в фабрике
 $adapter=$connection->getZfAdapter();
 $sql    = new Sql($adapter);
-$select = $sql->select();
+$select = $sql->select();      //вроде фабрики
 $select->from('admin_menu');
 $select->where(['id' => 1]); //выбираем запись для id=1
-$selectString = $sql->buildSqlString($select); //получим результирующцю строку SQL запроса
+
+/*можно сразу создать объект Select из ZF3*/
+$select = new select();      //вроде фабрики
+$select->from('admin_menu');
+$select->where(['id' => 1]); //выбираем запись для id=1
+
 //можно дальше как принято в ZF3, можно передать строку в RecordSet пакета ADO, или вызвать Execute, который вернет RecordSet
-$rs=$connection->Execute($selectString);
+$rs=$connection->Execute($select);
 var_dump($rs->Fields);
 ```

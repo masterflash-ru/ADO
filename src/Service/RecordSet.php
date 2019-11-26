@@ -19,6 +19,9 @@ use stdClass;
 use Iterator;
 use ADO\Entity\EntityRepository;
 use ADO\Entity\Universal;
+use Zend\Db\Sql\Sql;
+use Zend\Db\Sql\SqlInterface;
+
 
 
 class RecordSet implements Iterator
@@ -147,6 +150,10 @@ class RecordSet implements Iterator
         $this->columnCount = 0;
         $this->RecordSetId = md5(microtime()); // всегда уникальный
         $this->flag_create_xsdxml = false;
+        //смотрим сессию, если не стартовала, стартовать
+        if (session_status()!=PHP_SESSION_ACTIVE && php_sapi_name()!== 'cli'){
+            session_start();
+        }
     }
 
     public function Open ($Source = null, $ActiveConnect = null,  $Options = adCmdText)
@@ -154,25 +161,30 @@ class RecordSet implements Iterator
         if ($this->State) {
             throw new ADOException($this->ActiveConnect, 9, 'RecordSet:' . $this->RecordSetName, array('RecordSet'));
         }
+        
+        
         // проверим Source: на входе либо текст запроса SQL, либо ссылка на объект Command
-        if ($Source instanceof Command) {
+        if ($Source instanceof Command || is_null($Source)) {
             $this->container['source'] = $Source; // сохраним  объект  это  или  строка  запроса
         }
-        if (is_null($Source)) {
-            $this->container['source'] = null; // если ничего  нет на входу, так  же записываем null
-        }
-        
+
         if ($this->ActiveCommand instanceof Command){
             $this->container['source'] = $this->ActiveCommand; // здесь и строка  запроса есть
         }
         
+        //проверим на объект select,insert,update,delete  из ZF3
+        if ($Source instanceof SqlInterface && $ActiveConnect instanceof Connection) {
+           //преобразуем в строку SQL
+            $sql    = new Sql($ActiveConnect->getZfAdapter());
+            $Source=$sql->buildSqlString($Source);
+        }
+
         // если входной параметр строка запроса, то генерируем объект command и его вносим в RecordSet
         if (is_string($Source)) { 
             // строка запроса, создаем новый объект command
             $c = $Source; // строку сохраним если у нас имеется объект Command его записываем, иначе новый экземпляр
             $this->container['source'] = new Command(); // новый экземпляр
             $this->container['source']->CommandText = $c; // строка запроса
-            // $this->CommandText=$c;//сохраним строку запроса, для возможного  анализа
         }
         
         // активное подключение указано?
@@ -201,7 +213,7 @@ class RecordSet implements Iterator
                 //else throw new ADOException(null, 6, 'RecordSet:' . $this->RecordSetName, array('RecordSet'));
             }
         }
-        
+
         $this->ActiveCommand = $this->container['source'];
         $this->rez_array = []; // кеш результата (буфер обмена)
         $this->AbsolutePosition_min_max = array(0, 0); // верхний-нижний номер AbsolutePosition (нумерация с 1, если 0, значит не определено

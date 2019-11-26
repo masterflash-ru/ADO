@@ -6,6 +6,8 @@ use ADO\Entity\Property;
 use ADO\Collection\Collections;
 use ADO\Service\RecordSet;
 use ADO\Exception\ADOException;
+use Zend\Db\Sql\Sql;
+use Zend\Db\Sql\SqlInterface;
 /*
 конструктор генерации объекта Connection ADO
 */
@@ -130,10 +132,15 @@ public function Execute ($CommandText, &$RecordsAffected = 0, $Options = adCmdTe
          *adExecuteNoCreateRecordSet - НЕ возвращать RecordSet
          * провайдер после запроса
          */
+
+    //проверим на объект select,insert,update,delete  из ZF3
+    if ($CommandText instanceof SqlInterface) {
+       //преобразуем в строку SQL
+        $sql    = new Sql($this->getZfAdapter());
+        $CommandText=$sql->buildSqlString($CommandText);
+        $Options = adCmdText;
+    }
         
-        
-        //$a=$Options & adExecuteNoCreateRecordSet;
-        //echo $Options.':'.$a.'<br>';
     //проверим что нам надо вернуть
     if (!($Options & adExecuteNoCreateRecordSet)  && !($Options & adExecuteNoRecords)){
         // генерируем RS
@@ -142,11 +149,11 @@ public function Execute ($CommandText, &$RecordsAffected = 0, $Options = adCmdTe
         $rs->open($CommandText);
         $RecordsAffected = $rs->RecordCount; // кол-во застронутых строк
         return $rs;
-        }
+    }
     
         
     // выполняем команды в провайдере
-    $rez = $this->driver->Execute($this->connect_link, $CommandText,     $Options, $parameters);
+    $rez = $this->driver->Execute($this->connect_link, $CommandText, $Options, $parameters);
     // проверим на предмет ошибок, если они есть, добавим в коллекцию эти ошибки и выходим
     if (! empty($rez['error'])) {
         $this->Errors->add(array(
