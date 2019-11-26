@@ -21,7 +21,7 @@
 	<msg id="20">Not a valid parameter type in the entity generator, expected type string</msg>
 	<msg id="21">Attempt to search for non-existent field %0</msg>
 	<msg id="22">Not a valid variable type, expected a string or numeric type passed:%0</msg>
-	<msg id="23"></msg>
+	<msg id="23">Driver not support ADO</msg>
 	<msg id="24"></msg>
 	<msg id="25">Attempting to access nonexistent field %0 table</msg>
 	<msg id="26">Not a valid variable type, expected a object type passed:%0</msg>

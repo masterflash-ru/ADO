@@ -92,3 +92,14 @@ $select->where(['id' => 1]); //выбираем запись для id=1
 $rs=$connection->Execute($select);
 var_dump($rs->Fields);
 ```
+Для перехода от Zend-db к ADO (новое соединение не создается), пока поддерживается только PDO MySql:
+```php
+//$adapter - инициализированный адаптер в ZF3
+$connection=new Connection($adapter);
+//или
+$connection=new Connection();
+$connection->setZfAdapter($adapter);
+//далее стандартная работа в ADO, например,
+$rs=$connection->Execute("select * from admin_menu");
+var_dump($rs->Fields);
+```

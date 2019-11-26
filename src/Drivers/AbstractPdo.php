@@ -84,41 +84,48 @@ class AbstractPdo
             ];
     }
 
-
-    function connect($dsna) 
+/**
+* собственно соединение
+* $dsna - массив с параметрами соединения или уже готовый к работе экземпляр PDO
+*/
+public function connect($dsna) 
     {
         try {
             //разбираем параметры в драйвер (передаются в драйвер при подключении, подробно в документации)
-            $param=[];
-            $charset="";
-            if (isset($dsna['query'])) {
-                $p=explode('&',$dsna['query']);
-                foreach ($p as $v) {
-                    $p1=explode("=",$v); 
-                    //если константы не существует, просто игнорируем параметр и все
-                    if (defined($p1[0])) {
-                        $param[ constant($p1[0])]=$p1[1];
-                    } elseif ($p1[0]=="charset") {
-                        //если есть кодировка
-                        $charset=";charset=".$p1[1];
+            if (is_array($dsna)){
+                $param=[];
+                $charset="";
+                if (isset($dsna['query'])) {
+                    $p=explode('&',$dsna['query']);
+                    foreach ($p as $v) {
+                        $p1=explode("=",$v); 
+                        //если константы не существует, просто игнорируем параметр и все
+                        if (defined($p1[0])) {
+                            $param[ constant($p1[0])]=$p1[1];
+                        } elseif ($p1[0]=="charset") {
+                            //если есть кодировка
+                            $charset=";charset=".$p1[1];
+                        }
                     }
                 }
-            }
-            $dsn=str_ireplace ( "MysqlPdo", "mysql", $dsna ['scheme'] ) . ':dbname=' . $dsna ['path'] . ';';
-            
-            if ($dsna ['host']=="unix_socket"){
-                $dsn.="unix_socket=".$dsna ['unix_socket'];
-            } else {
-                $dsn.="host=".$dsna ['host'];
-            }
+                $dsn=str_ireplace ( "MysqlPdo", "mysql", $dsna ['scheme'] ) . ':dbname=' . $dsna ['path'] . ';';
 
-            if ($dsna ['port']){
-                $dsn.=";port=".$dsna ['port'];
-            }
-            $dsn.=$charset;
+                if ($dsna ['host']=="unix_socket"){
+                    $dsn.="unix_socket=".$dsna ['unix_socket'];
+                } else {
+                    $dsn.="host=".$dsna ['host'];
+                }
 
-            @$connect_link = new PDO ( $dsn, $dsna ['user'], $dsna ['pass'] ,$param);
-            $connect_link->setAttribute ( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
+                if ($dsna ['port']){
+                    $dsn.=";port=".$dsna ['port'];
+                }
+                $dsn.=$charset;
+                @$connect_link = new PDO ( $dsn, $dsna ['user'], $dsna ['pass'] ,$param);
+                $connect_link->setAttribute ( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
+            }
+            if ($dsna instanceof PDO){
+                $connect_link=$dsna;
+            }
             
         } catch (PDOException $e ) { 
             // ошибка, обращаемся к обработчику ошибок соединения

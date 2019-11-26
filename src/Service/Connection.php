@@ -8,6 +8,8 @@ use ADO\Service\RecordSet;
 use ADO\Exception\ADOException;
 use Zend\Db\Sql\Sql;
 use Zend\Db\Sql\SqlInterface;
+use Zend\Db\Adapter\AdapterInterface;
+use Zend\Db\Adapter\Driver\Pdo\Pdo as zfPdoDriver;
 /*
 конструктор генерации объекта Connection ADO
 */
@@ -33,19 +35,24 @@ class Connection
     // перегруженное сво-ва
     private $container = array('cursorlocation' => NULL);    // тип курсора массив серегруженными сво-вами
     
-    public function __construct ($Provider = '')
+    
+    /**
+    * $Provider - строка имени провайдера, в терминологии ADO, например, MysqlPdo
+    * или экземпляр с интерфейсом Zend\Db\Adapter\AdapterInterface - это адаптер из ZF3
+    */
+    public function __construct ($Provider = null)
     { 
         $this->Mode = adModeUnknown; // неопределенное состояние типа соединенения, разрешено чтение и запись
         $this->Errors = new Collections(); // объект-интератор ошибок объекта connect
         $this->Properties = new Collections(); // свой-ва соединения/сервера определяем события по умолчанию
         $this->container['cursorlocation'] = adUseServer; // по умолчанию курсор на стороне сервера
-        if (!empty($Provider)) {
+        if (is_string($Provider)){
             $this->Provider=$Provider;
-        }
-
-        if ($this->Provider){
             $d='ADO\\Drivers\\'.$this->Provider;
             $this->driver = new $d;
+        }
+        if ($Provider instanceof AdapterInterface){
+            $this->setZfAdapter($Provider);
         }
 }
 
@@ -53,6 +60,9 @@ public function Open ($server = '', $user = '', $password = '', $database = '')
 { 
     /* Открывает  подключение к базе данных со значениями  свойств, определяемыми объектом ConnectionString.парсим строку
      соединения,  если явно указаны параметры открытия,  то заменяем*/
+    if ($this->State>0){
+        throw new ADOException($this, 9, 'Connection:', array('Connection'));// ошибка, драйвер не найден
+    }
     $dsna = [];
     $dsna = $this->Parser_ConnectionString($this->ConnectionString); // разобрать  строку соединения
     if ($server) {
@@ -103,7 +113,7 @@ public function Open ($server = '', $user = '', $password = '', $database = '')
             'SQLSTATE' => $status_array['description'], 
             'NativeError' => $status_array['number']
         ]);
-        throw new ADOException($this); // добавим в колекцию ошибок данные и вызовим исключение
+        throw new ADOException($this, 1, 'Connection:', array($this->Provider)); // добавим в колекцию ошибок данные и вызовим исключение
     }
 }
     
@@ -117,7 +127,46 @@ public function getZfAdapter()
 {
     return $this->driver->getZfAdapter($this->connect_link);
 }
-    
+
+/**
+* установить соединение в терминологии ADO из адаптера ZF3
+*/
+public function setZfAdapter(AdapterInterface $adapter)
+{
+    if (!$adapter->getDriver() instanceof zfPdoDriver){
+        throw new ADOException($this, 1, 'Connection:', array($adapter->getDriver()->getConnection()->getDriverName())); // добавим в колекцию ошибок данные и вызовим исключение
+    }
+    switch ($adapter->getDriver()->getConnection()->getDriverName()){
+        case "mysql":{
+            $d='ADO\\Drivers\\MysqlPdo';
+            $this->Provider="MysqlPdo";
+            break;
+        }
+    }
+    $this->driver = new $d;
+    $status_array = $this->driver->connect($adapter->getDriver()->getConnection()->getResource() ); // открыть соединение, возвращает массив 3 элемента
+    if ($status_array['number'] == 0) {
+        // все хорошо
+        $this->State = adStateOpen; // обхъект открыт
+        $this->connect_link = $status_array['connect_link']; // соединение  с  базой  данных  получить  информацию  о  подключении
+        $arr = $this->driver->get_server_Properties($this->connect_link);
+        $this->Properties = new Propertys(); // получить экземпляр объекта Propertys
+        foreach ($arr as $k => $v){
+            $this->Properties->Append(new Property($k, adEmpty, $v, NULL));
+        }
+    } else {
+        unset($status_array['connect_link']);
+        $this->Errors->add([
+            'number' => $status_array['number'],
+            'description' => $status_array['description'],
+            'source' => 'Connection',
+            'SQLSTATE' => $status_array['description'], 
+            'NativeError' => $status_array['number']
+        ]);
+        throw new ADOException($this, 1, 'Connection:', array($this->Provider)); // добавим в колекцию ошибок данные и вызовим исключение
+    }
+}
+
     
 public function Execute ($CommandText, &$RecordsAffected = 0, $Options = adCmdText, $parameters = NULL)
     { // исполняет  запросы,  возвращает  кол-во  рядов  затронутых  при  исполнении
