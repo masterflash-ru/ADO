@@ -84,11 +84,11 @@ $select->from('admin_menu');
 $select->where(['id' => 1]); //выбираем запись для id=1
 
 /*можно сразу создать объект Select из ZF3*/
-$select = new select();      //вроде фабрики
+$select = new select();      //аналогично update, delete, insert
 $select->from('admin_menu');
 $select->where(['id' => 1]); //выбираем запись для id=1
 
-//можно дальше как принято в ZF3, можно передать строку в RecordSet пакета ADO, или вызвать Execute, который вернет RecordSet
+//можно дальше как принято в ZF3, можно передать объект в RecordSet пакета ADO, или вызвать Execute, который вернет RecordSet
 $rs=$connection->Execute($select);
 var_dump($rs->Fields);
 ```
@@ -99,6 +99,7 @@ $connection=new Connection($adapter);
 //или
 $connection=new Connection();
 $connection->setZfAdapter($adapter);
+//объект Connection автоматически переходит в состояние Open, т.е. готов к использованию
 //далее стандартная работа в ADO, например,
 $rs=$connection->Execute("select * from admin_menu");
 var_dump($rs->Fields);
