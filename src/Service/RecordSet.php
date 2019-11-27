@@ -151,7 +151,7 @@ class RecordSet implements Iterator
         $this->RecordSetId = md5(microtime()); // всегда уникальный
         $this->flag_create_xsdxml = false;
         //смотрим сессию, если не стартовала, стартовать
-        if (session_status()!=PHP_SESSION_ACTIVE && php_sapi_name()!== 'cli'){
+        if (session_status()!=PHP_SESSION_ACTIVE ){
             session_start();
         }
     }
