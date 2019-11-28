@@ -365,7 +365,7 @@ class RecordSet implements Iterator
         if ($this->container['cursortype'] == adOpenForwardOnly &&  $NewAbsolutePosition < $this->container['absoluteposition']) {
             throw new ADOException($this->ActiveConnect, 2,'RecordSet:' . $this->RecordSetName);
         }
-                
+  
          for ($i = 0; $i < $this->columnCount; $i ++) {
              // очистить поля
              $this->Fields->Item[$i]->set_value(null); // установить  в null  значения  полей
@@ -389,7 +389,7 @@ class RecordSet implements Iterator
         }
         // пересчитать по позиции номер страницы и номер записи в странице
         $this->container['absolutepage'] = floor(  ($NewAbsolutePosition - 1) /  $this->container['pagesize']) + 1; //проверяем кеш, попали в него или нет
-        if (                // условие при котором мы попадем в кеш
+        if (  // условие при котором мы попадем в кеш
                 $NewAbsolutePosition >= $this->AbsolutePosition_min_max[0] && // проверим границы кеша касаемо  номера  новой  позиции
                 $NewAbsolutePosition <=  $this->AbsolutePosition_min_max[1] &&
                 $this->AbsolutePosition_min_max[0] > 0 && // границы  кеша  касаемо  конечных  записей
@@ -429,7 +429,7 @@ class RecordSet implements Iterator
         if ($Recorditem > $this->RecordCount)   {
             $Recorditem = $this->RecordCount;
         }
-                    
+
         // вперед
         if ($Recorditem + $NewAbsolutePosition > $this->RecordCount &&  $NewAbsolutePosition > $this->container['absoluteposition']){
             $Recorditem = $this->RecordCount - $NewAbsolutePosition + 1;

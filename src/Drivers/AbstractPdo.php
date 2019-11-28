@@ -18,9 +18,9 @@ class AbstractPdo
     const adExecuteNoRecords = 128; // не возвращать строки, просто исполнить и все
     
     public $NamedParameters = false; // передавать только порядковые номера параметров, если true тогда передаются и  имена
-    private $data_type = []; // типы данных - соответсвие между ADO и провайдером
-    private $Direction = []; // направление переменных в параметрах    
-    private $attributes; // константы для получения атрибут соединения
+    protected $data_type = []; // типы данных - соответсвие между ADO и провайдером
+    protected $Direction = []; // направление переменных в параметрах    
+    protected $attributes; // константы для получения атрибут соединения
     
     public function __construct()
     {
@@ -71,17 +71,6 @@ class AbstractPdo
         
         $this->Direction [2] = PDO::PARAM_INPUT_OUTPUT;
         $this->Direction [3] = PDO::PARAM_INPUT_OUTPUT;
-        $this->attributes = [
-            "AUTOCOMMIT",
-            "ERRMODE",
-            "CASE",
-            "CLIENT_VERSION",
-            "CONNECTION_STATUS",
-            "PERSISTENT",
-            "SERVER_INFO",
-            "SERVER_VERSION",
-            "DRIVER_NAME",
-            ];
     }
 
 /**
@@ -105,10 +94,13 @@ public function connect($dsna)
                         } elseif ($p1[0]=="charset") {
                             //если есть кодировка
                             $charset=";charset=".$p1[1];
+                            $pgsqlcharset=$p1[1];
                         }
                     }
                 }
-                $dsn=str_ireplace ( "MysqlPdo", "mysql", $dsna ['scheme'] ) . ':dbname=' . $dsna ['path'] . ';';
+                $drv=str_ireplace ( "MysqlPdo", "mysql", $dsna ['scheme'] );
+                $drv=str_ireplace ( "PgsqlPdo", "pgsql", $drv );
+                $dsn= $drv. ':dbname=' . $dsna ['path'] . ';';
 
                 if ($dsna ['host']=="unix_socket"){
                     $dsn.="unix_socket=".$dsna ['unix_socket'];
@@ -119,9 +111,16 @@ public function connect($dsna)
                 if ($dsna ['port']){
                     $dsn.=";port=".$dsna ['port'];
                 }
-                $dsn.=$charset;
+                if ($drv=="mysql"){
+                    $dsn.=$charset;
+                }
+                
                 @$connect_link = new PDO ( $dsn, $dsna ['user'], $dsna ['pass'] ,$param);
                 $connect_link->setAttribute ( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
+                if (isset($pgsqlcharset) && $drv== 'pgsql') {
+                    $connect_link->exec('SET NAMES ' . $connect_link->quote($pgsqlcharset));
+                }
+
             }
             if ($dsna instanceof PDO){
                 $connect_link=$dsna;
@@ -186,7 +185,6 @@ public function connect($dsna)
         }
         $stmt->_row_number = 1;             //начальное положение указателя
         $RecordsAffected = $stmt->rowCount ();
-        
         /*
         * Ошибки - массив из 3-х элементов: 0 SQLSTATE error code (a five
         * characters alphanumeric identifier defined in the ANSI SQL standard).
@@ -305,7 +303,6 @@ public function loadColumnMeta($stmt, $col)
     {
         $rez=[];
         $rez = $stmt->fetch ( PDO::FETCH_NUM );
-        
         $hash=spl_object_hash($stmt);
         //проверяем типы колонок и устанавливаем данные в соотвествии с этим типом
         foreach ($rez as $col=>$value){
@@ -357,7 +354,7 @@ public function getZfAdapter(Pdo $connect_link)
 * результатом
 */
 
-    private function bindparam($stmt, &$parameters)
+    protected function bindparam($stmt, &$parameters)
     { // разбирает по параметрам
         if (is_object ( $parameters )){
             if ($this->NamedParameters){
