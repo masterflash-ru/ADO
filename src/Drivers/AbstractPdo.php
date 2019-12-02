@@ -8,7 +8,7 @@ use ADO\Exception\ADOException;
 use PDO;
 use Zend\Db\Adapter\Driver\Pdo\Pdo as ZfPdoDriver;
 use Zend\Db\Adapter\Adapter;
-
+use Zend\Db\Sql\Sql;
 
 class AbstractPdo
 {
@@ -53,6 +53,7 @@ class AbstractPdo
         $this->data_type1 ['TINY'] = adTinyInt;
         $this->data_type1 ['BOOLEAN'] = adBoolean; // не работает пока
         $this->data_type1 ['LONG'] = adInteger;
+        $this->data_type1 ['INT4'] = adInteger;
         $this->data_type1 ['SHORT'] = adBigInt;
         $this->data_type1 ['INT24'] = adBigInt;
         $this->data_type1 ['LONGLONG'] = adBigInt;
@@ -60,11 +61,12 @@ class AbstractPdo
         $this->data_type1 ['DOUBLE'] = adDouble;
         $this->data_type1 ['NEWDECIMAL'] = adDecimal;
         $this->data_type1 ['DATE'] = adDBDate;
-        $this->data_type1 ['DATETIME'] = adChar;
+        $this->data_type1 ['DATETIME'] = adDBTimeStamp;
         $this->data_type1 ['TIMESTAMP'] = adDBTimeStamp;
         $this->data_type1 ['TIME'] = adDBTime;
         $this->data_type1 ['YEAR'] = adInteger;
         $this->data_type1 ['STRING'] = adChar;
+        $this->data_type1 ['VARCHAR'] = adChar;
         $this->data_type1 ['VAR_STRING'] = adChar;
         $this->data_type1 ['BLOB'] = adBinary;
         $this->data_type1 ['GEOMETRY'] = adEmpty;
@@ -145,31 +147,19 @@ public function connect($dsna)
 
     public function Execute($connect_link, $commandtext = '', $Options = AbstractPdo::adCmdText, &$parameters = NULL) 
         {
-        // выполняет запрос и возвращает объект/русурс с результатом
-
-        /* ключи массива error
-        0  	SQLSTATE error code (a five characters alphanumeric identifier defined in the ANSI SQL standard).
-        1 	Driver specific error code.
-        2 	Driver specific error messag
-
-        возвращается массив 
-            'error'=>$error, см. выше
-            'stmt'=>$stmt  объект с результатом, который будет обрабатывать этот же объект
-            RecordsAffected=>$RecordsAffected - кеол-во затронутых рядов при операции
-        */
         try {
             if ($Options & AbstractPdo::adCmdTable){ 
                 // вернуть все строки таблицы, имя таблицы указано в строке запроса
-                $stmt = $connect_link->prepare ( 'select * from ' . $commandtext, array (PDO::ATTR_CURSOR => PDO::CURSOR_SCROLL ) ); // готовим  к исполнению
+                $stmt = $connect_link->prepare ( 'select * from ' . $commandtext ); // готовим  к исполнению
                 $stmt->execute ();
             } elseif ($Options & AbstractPdo::adCmdStoredProc)	{ 
                 // хранимые процедуры, указывается только имя процедуры, все остальное приклеиваем мы
-                $stmt = $connect_link->prepare ( 'call ' . $commandtext , array (PDO::ATTR_CURSOR => PDO::CURSOR_SCROLL ) ); // готовим к исполнению
+                $stmt = $connect_link->prepare ( 'call ' . $commandtext  ); // готовим к исполнению
                 $stmt = $this->bindparam ( $stmt, $parameters );
                 $stmt->execute ();
             } else {
                 // обычная текстовая команда
-                $stmt = $connect_link->prepare ( $commandtext, array (PDO::ATTR_CURSOR => PDO::CURSOR_SCROLL ) ); // готовим  к  исполнению
+                $stmt = $connect_link->prepare ( $commandtext ); // готовим  к  исполнению
                 $stmt = $this->bindparam ( $stmt, $parameters );
                 $stmt->execute ();
             }
@@ -228,23 +218,112 @@ public function connect($dsna)
 
 /*
 * служебная функция для генерации SQL для обновления записей посредством
-* RecordSet $stmt - объект с резульатом выборки в формате провайдера
-* $old_value_array - массив в виде имя_поля1=>значение1,..... возможно 2
-* варианта, с использованием первичного ключа, и без, от этого зависит
-* условие в конструкции where $status - смассив статусов
-* (новая/иземененная)
-  
-  возвращается массив:
-  array ('sql' => $sql,				- сам SQL запрос
-	  			 'values' => $v,				- то что вставляется в иструкцию insert, сами значения
-				  'type' => 'insert',		-сама операция (insert update delete)
-				   'sql1' => $sql_start 	- начальная инструкция при добавлении, пример, "insert into (....) values (.....)"  (актуально если мы вставляем массово записи в одной инструкции insert - это не стандартная реализация)
-				  'primary_key_number_field' - номер поля с первичным ключем, если ключа нет - NULL (нужно что бы RS получил последний ID записи и внес свое поле с этим ключем)
-				   );
 */
-public function create_sql_update($connect_link,$stmt, array $old_value_array = [], array $new_value_array = [], array $status =['flag_change'=>false,'flag_new'=>false,'flag_delete'=>false]) 
-{ 
-}
+    public function create_sql_update(
+        $connect_link,
+        $stmt, 
+        array $old_value_array = [], 
+        array $new_value_array = [], 
+        array $status =['flag_change'=>false,'flag_new'=>false,'flag_delete'=>false]
+    ) 
+    {
+        $sql = new Sql($this->getZfAdapter($connect_link));
+        if ($status ['flag_new']) { // создание новой записи - ассоциированый массив
+            $primary_key_number_field=null;
+            $i=0;
+            foreach ($new_value_array as $k => $v ){
+                //получить описание полей и проверить на primary_key
+                $cc =$this->loadColumnMeta($stmt, $i,$connect_link);
+                if (empty($cc['table'])){continue;}
+                $ColumnMetaItem =$cc;
+                if (empty($ColumnMetaItem['flags'])){continue;}
+                $flags = $ColumnMetaItem['flags']; // флаги в колонках
+                if (in_array ( 'primary_key', $flags )) {
+                    $primary_key_number_field=$i; //есть первичный ключ, запомним его номер в списке полей
+                    //первичный ключ не может быть null, в postgresql это строго, вообще удалим из массива если там null
+                    if (is_null($v)){
+                        unset($new_value_array[$k]);
+                    }
+                }
+                $i++;
+            }
+            /*
+            * возвращаем несколько параметров что бы за олдин запрос внести
+            * несколько записей, тем самым снизить нагрузку на базу путем
+            * уменьшения кол-ва обращений
+            */
+            $insert=$sql->Insert($ColumnMetaItem ['table']);
+            $insert->values($new_value_array);
+            $sql=$sql->buildSqlString($insert);
+            $s=explode('VALUES',$sql);
+            return ['sql' => $sql, 'values' => $s[1], 'type' => 'insert', 'sql1' => $s[0]." VALUES " ,'primary_key_number_field'=>$primary_key_number_field];
+        }
+        
+        
+        
+        
+        $column_count = count($old_value_array); // кол-во колонок
+        $primary_key = []; // хранит массив имен полей которые являются первичными ключами
+        $ColumnMeta=[];
+        $keys=[];//просто ключи
+        for($i = 0; $i < $column_count; $i ++) {
+            // пробежим по колонкам и поищем первичный ключ
+            $cc =$this->loadColumnMeta($stmt, $i,$connect_link);
+            if (empty($cc['table'])){continue;}
+            $ColumnMetaItem =$cc;
+            if (empty($ColumnMetaItem['flags'])){continue;}
+            $flags = $ColumnMetaItem ['flags']; // флаги в колонках
+            if (in_array ( 'primary_key', $flags )){
+                $primary_key [$ColumnMetaItem ['name']] = $old_value_array [$ColumnMetaItem ['name']];
+            }
+            if (in_array ( 'multiple_key', $flags ) || in_array ( 'unique_key', $flags )){
+                $keys [$ColumnMetaItem ['name']] = $old_value_array [$ColumnMetaItem ['name']];
+            }
+            $ColumnMeta[$ColumnMetaItem ['name']]=$ColumnMetaItem;
+        }
+
+        if ($status ['flag_change']){
+            // измненение существующей записи
+            if (count($primary_key) > 0) {
+                // первичный ключ есть
+                $update=$sql->Update($ColumnMetaItem ['table']);
+                $update->set($this->normalizeType(array_diff_key($new_value_array,$primary_key),$ColumnMeta));
+                $update->where($this->normalizeType($primary_key,$ColumnMeta));
+
+            } elseif (count ( $keys ) > 0){//обычные ключи
+                $update=$sql->Update($ColumnMetaItem ['table']);
+                $update->set($this->normalizeType(array_diff_key($new_value_array,$keys),$ColumnMeta));
+                $update->where($this->normalizeType($keys,$ColumnMeta));
+
+            } else { // первичного ключа нет и вообще нет никаких ключей, самый худший вариант
+                $update=$sql->Update($ColumnMetaItem ['table']);
+                $update->set($this->normalizeType(array_diff($new_value_array,$old_value_array),$ColumnMeta));
+                $update->where($this->normalizeType($old_value_array,$ColumnMeta));
+            }
+            $sql=$sql->buildSqlString($update);
+            return ['sql' => $sql, 'values' => null, 'type' => 'update', 'sql1' => null,'primary_key_number_field'=>null];
+        }
+        
+        if ($status ['flag_delete']) {
+            // удаление существующей записи
+            if (count($primary_key) > 0) {
+                // первичный ключ есть
+                $delete=$sql->Delete($ColumnMetaItem ['table']);
+                $delete->where($this->normalizeType($primary_key,$ColumnMeta));
+
+            } elseif (count ( $keys ) > 0){//обычные ключи
+                $delete=$sql->Delete($ColumnMetaItem ['table']);
+                $delete->where($this->normalizeType($keys,$ColumnMeta));
+
+            } else { // первичного ключа нет и вообще нет никаких ключей, самый худший вариант
+                $delete=$sql->Delete($ColumnMetaItem ['table']);
+                $delete->where($this->normalizeType($old_value_array,$ColumnMeta));
+            }
+            $sql=$sql->buildSqlString($delete);
+            return ['sql' => $sql, 'values' => null, 'type' => 'delete', 'sql1' => null ,'primary_key_number_field'=>null];
+        }
+        
+    }
 
 public function get_last_insert_id($db_connect)
 {
@@ -261,8 +340,9 @@ public function get_last_insert_id($db_connect)
 получить метаданные поля
 $stmt - резкльтат запроса PDO
 $col - номер колонки 0...
+$connect_link - соединение с базой
 */	
-public function loadColumnMeta($stmt, $col)
+public function loadColumnMeta($stmt, $col,$connect_link=null)
  {
     if (isset($stmt->ColumnMeta[$col])){
         return $stmt->ColumnMeta[$col];
@@ -271,10 +351,11 @@ public function loadColumnMeta($stmt, $col)
     // получить описания поля и заполнить
     $ColumnMeta = $stmt->getColumnMeta ( $col );
     
+    $native_type=strtoupper($ColumnMeta['native_type']);
     
     // конвертировать в стандарт ADO
-    if (isset ( $ColumnMeta ['native_type'] ) && isset ( $this->data_type1 [$ColumnMeta ['native_type']] )){
-        $ColumnMeta ['Type'] = $this->data_type1 [$ColumnMeta ['native_type']];
+    if (isset ( $ColumnMeta ['native_type'] ) && isset ( $this->data_type1[$native_type] )){
+        $ColumnMeta ['Type'] = $this->data_type1[$native_type];
     } else {
         $ColumnMeta ['Type'] = adEmpty;
     }
@@ -301,8 +382,10 @@ public function loadColumnMeta($stmt, $col)
 
     public function fetchNext($stmt) 
     {
-        $rez=[];
         $rez = $stmt->fetch ( PDO::FETCH_NUM );
+        if (empty($rez)){
+            return [];
+        }
         $hash=spl_object_hash($stmt);
         //проверяем типы колонок и устанавливаем данные в соотвествии с этим типом
         foreach ($rez as $col=>$value){
@@ -345,6 +428,26 @@ public function getZfAdapter(Pdo $connect_link)
     return new Adapter($driver);  
 }
 
+/**
+* нормализация типов данных
+* приводит к типу поля, работает преобразование к целому числу или с плавающей запятой
+*/    
+protected function normalizeType(array $data, array $ColumnMeta)
+{
+    $rez=$data;
+    foreach ($data as $field=>$value) {
+        if (isset($ColumnMeta[$field])){
+            if (in_array($ColumnMeta[$field]["Type"],[adTinyInt,adInteger,adBigInt,adSingle])){
+                $rez[$field]=(int)$value;
+            }
+            /*проверим тип, если это целове число, возвращаем как есть*/
+            if (in_array($ColumnMeta[$field]["Type"],[adDecimal,adDouble])){
+                $rez[$field]= str_replace(",",".",(float)$value);
+            }
+        }
+    }
+    return $rez;
+}
 /*
 * для внутренних нужд параметры в SQL, массив объектов $parametrs: [0]
 * => ADO_Parameter Object ( [array_item:private] => Array ( [Name] =>

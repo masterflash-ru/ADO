@@ -468,12 +468,12 @@ class RecordSet implements Iterator
                 // запись, если  есть, грузим из этого файла, иначе из БД
                 if (isset($_SESSION['ADORecordSet'][$this->RecordSetId][$i +$NewAbsolutePosition - 1])) {
                     // имеется,грузим ее
-                    $a = unserialize(file_get_contents(sys_get_temp_dir() .$_SESSION['ADORecordSet'][$this->RecordSetId][$i + $NewAbsolutePosition - 1]));
+                    $a = unserialize(file_get_contents(sys_get_temp_dir() ."/".$_SESSION['ADORecordSet'][$this->RecordSetId][$i + $NewAbsolutePosition - 1]));
                     $rez_array[$i] = $a[1];
                     $this->old_rez_array[$i] = $a[0];
                     // считали в память, временный файл уже не нужен,
                     // удалим его
-                    unlink( sys_get_temp_dir() . $_SESSION['ADORecordSet'][$this->RecordSetId][$i + $NewAbsolutePosition - 1]);
+                    unlink( sys_get_temp_dir()."/". $_SESSION['ADORecordSet'][$this->RecordSetId][$i + $NewAbsolutePosition - 1]);
                     // удалим ссылку на этот файл из сесии
                     unset( $_SESSION['ADORecordSet'][$this->RecordSetId][$i + $NewAbsolutePosition - 1]);
                 } else  {

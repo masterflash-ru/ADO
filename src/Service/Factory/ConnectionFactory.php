@@ -1,7 +1,7 @@
 <?php
 namespace ADO\Service\Factory;
 
-use Psr\Container\ContainerInterface;
+use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\Factory\FactoryInterface;
 
 use ADO\Service\Connection;

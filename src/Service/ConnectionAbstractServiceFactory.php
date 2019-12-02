@@ -6,7 +6,7 @@
 
 namespace ADO\Service;
 
-use Psr\Container\ContainerInterface;
+use Interop\Container\ContainerInterface;
 use ADO\Service\Connection;
 use Zend\ServiceManager\AbstractFactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
