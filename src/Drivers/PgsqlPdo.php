@@ -33,38 +33,6 @@ class PgsqlPdo extends AbstractPdo
     
     
 /*
-array(10) {
-  ["native_type"] => string(4) "LONG"
-  ["pdo_type"] => int(2)
-  ["flags"] => array(2) {
-    [0] => string(8) "not_null"
-    [1] => string(11) "primary_key"
-  }
-  ["table"] => string(4) "test"
-  ["name"] => string(2) "id"
-  ["len"] => int(11)
-  ["precision"] => int(0)
-  ["Type"] => int(3)
-  ["NumericScale"] => int(0)
-  ["DefinedSize"] => int(11)
-}
-
-array(10) {
-  ["native_type"] => string(6) "STRING"
-  ["pdo_type"] => int(2)
-  ["flags"] => array(1) {
-    [0] => string(12) "multiple_key"
-  }
-  ["table"] => string(4) "test"
-  ["name"] => string(4) "name"
-  ["len"] => int(60)
-  ["precision"] => int(0)
-  ["Type"] => int(129)
-  ["NumericScale"] => int(0)
-  ["DefinedSize"] => int(60)
-}
-*/
-   /*
 получить метаданные поля
 $stmt - резкльтат запроса PDO
 $col - номер колонки 0...
