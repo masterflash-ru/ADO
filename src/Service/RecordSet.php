@@ -19,8 +19,8 @@ use stdClass;
 use Iterator;
 use ADO\Entity\EntityRepository;
 use ADO\Entity\Universal;
-use Zend\Db\Sql\Sql;
-use Zend\Db\Sql\SqlInterface;
+use Laminas\Db\Sql\Sql;
+use Laminas\Db\Sql\SqlInterface;
 
 
 
