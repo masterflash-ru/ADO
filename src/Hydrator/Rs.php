@@ -3,8 +3,8 @@
  */
 namespace ADO\Hydrator;
 
-use Zend\Hydrator\ClassMethods;
-use Zend\Hydrator\Exception\BadMethodCallException;
+use Laminas\Hydrator\ClassMethods;
+use Laminas\Hydrator\Exception\BadMethodCallException;
 use ADO\Service\RecordSet;
 use ADO\Exception\ADOException;
 
@@ -26,7 +26,7 @@ public function extractrs(RecordSet $rs,$entity,array $meta=[])
 	$rez=$this->extract($entity);
 	$fields=$meta["fields"];
 	$data=[];
-	//\Zend\Debug\Debug::dump($rs->DataColumns->Item_text);
+	//\Laminas\Debug\Debug::dump($rs->DataColumns->Item_text);
 	foreach ($rez as $field_db=>$value)
 		{
 			if (!array_key_exists($field_db,$rs->DataColumns->Item_text) ) {throw new ADOException(NULL, 25,NULL,[$field_db] );}
@@ -51,7 +51,7 @@ public function extractrs(RecordSet $rs,$entity,array $meta=[])
 
 
     /**
-	надстройка над стандартный гидратором Zend
+	надстройка над стандартный гидратором Laminas
 	просто RecordSet преобразуем в массив и далее все стандартно
 	если имеется карта соотвествия полей и объекта, тогда работаем с ней
 	$rs - RS  с записью которую грузим

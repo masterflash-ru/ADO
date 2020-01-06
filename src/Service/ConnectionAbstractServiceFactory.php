@@ -8,8 +8,8 @@ namespace ADO\Service;
 
 use Interop\Container\ContainerInterface;
 use ADO\Service\Connection;
-use Zend\ServiceManager\AbstractFactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\AbstractFactoryInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class ConnectionAbstractServiceFactory implements AbstractFactoryInterface
 {

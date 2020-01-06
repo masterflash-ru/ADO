@@ -1,12 +1,12 @@
 <?php
-    
+
 namespace ADO\Service;
 
 use ADO\Collection\Parameters;
 use ADO\Exception\ADOException;
 use ADO\Entity\Parameter;
-use Zend\Db\Sql\Sql;
-use Zend\Db\Sql\SqlInterface;
+use Laminas\Db\Sql\Sql;
+use Laminas\Db\Sql\SqlInterface;
 
 // --------------------- COMMAND -параметрические зхапросы
 class Command

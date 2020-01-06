@@ -6,9 +6,9 @@ namespace ADO\Drivers;
 
 use ADO\Exception\ADOException;
 use PDO;
-use Zend\Db\Adapter\Driver\Pdo\Pdo as ZfPdoDriver;
-use Zend\Db\Adapter\Adapter;
-use Zend\Db\Sql\Sql;
+use Laminas\Db\Adapter\Driver\Pdo\Pdo as ZfPdoDriver;
+use Laminas\Db\Adapter\Adapter;
+use Laminas\Db\Sql\Sql;
 
 class AbstractPdo
 {

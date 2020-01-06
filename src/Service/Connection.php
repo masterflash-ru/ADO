@@ -6,10 +6,10 @@ use ADO\Entity\Property;
 use ADO\Collection\Collections;
 use ADO\Service\RecordSet;
 use ADO\Exception\ADOException;
-use Zend\Db\Sql\Sql;
-use Zend\Db\Sql\SqlInterface;
-use Zend\Db\Adapter\AdapterInterface;
-use Zend\Db\Adapter\Driver\Pdo\Pdo as zfPdoDriver;
+use Laminas\Db\Sql\Sql;
+use Laminas\Db\Sql\SqlInterface;
+use Laminas\Db\Adapter\AdapterInterface;
+use Laminas\Db\Adapter\Driver\Pdo\Pdo as zfPdoDriver;
 /*
 конструктор генерации объекта Connection ADO
 */
@@ -38,7 +38,7 @@ class Connection
     
     /**
     * $Provider - строка имени провайдера, в терминологии ADO, например, MysqlPdo
-    * или экземпляр с интерфейсом Zend\Db\Adapter\AdapterInterface - это адаптер из ZF3
+    * или экземпляр с интерфейсом Laminas\Db\Adapter\AdapterInterface - это адаптер из ZF3
     */
     public function __construct ($Provider = null)
     { 

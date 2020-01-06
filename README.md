@@ -65,19 +65,19 @@ $rs->persist(Объект_сущности);
 ```
 Заполненый RecordSet можно перебирать циклом foreach, RecordSet стал реализовывать интерфейс Iterator
 
-Вы можете работать в стиле Zend-Db
+Вы можете работать в стиле Laminas-Db
 
 Создавать новое подключение не требуется, ADO вернет уже инициализированный объект Adapter:
 ```php
 $connection=$container->get('DefaultSystemDb');
 $adapter=$connection->getZfAdapter();
 ```
-все возможности работы штатного Zend-Db читайте в документации к нему.
+все возможности работы штатного Laminas-Db читайте в документации к нему.
 
-пример работы с абстракциями в стиле Zend-Db:
+пример работы с абстракциями в стиле Laminas-Db:
 ```php
-use Zend\Db\Sql\Sql;
-use Zend\Db\Sql\Select;
+use Laminas\Db\Sql\Sql;
+use Laminas\Db\Sql\Select;
 
 //$connection - экземпляр Connection пакета ADO, полученный например, в фабрике
 $adapter=$connection->getZfAdapter();
@@ -95,7 +95,7 @@ $select->where(['id' => 1]); //выбираем запись для id=1
 $rs=$connection->Execute($select);
 var_dump($rs->Fields);
 ```
-Для перехода от Zend-db к ADO (новое соединение не создается), пока поддерживается только PDO MySql:
+Для перехода от Laminas-db к ADO (новое соединение не создается), пока поддерживается только PDO MySql:
 ```php
 //$adapter - инициализированный адаптер в ZF3
 $connection=new Connection($adapter);
