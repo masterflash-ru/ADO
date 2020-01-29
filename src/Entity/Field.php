@@ -139,6 +139,30 @@ class Field
      public function __call ($name, $var)
      { // диспетчер служебных функций
           if ($name == 'set_value') {
+                /*преобразуем типы*/
+                if (!is_null($var[0])){
+                    switch ($this->container["type"]){
+                        case adSmallInt:
+                        case adInteger:
+                        case adTinyInt:
+                        case adUnsignedTinyInt:
+                        case adUnsignedSmallInt:
+                        case adUnsignedInt:
+                        case adBigInt:
+                        case adUnsignedBigInt: {
+                            $var[0]=(int)$var[0];
+                            break;
+                        }
+                        case adSingle:
+                        case adDouble:
+                        case adCurrency:
+                        case adDecimal:{
+                            $var[0]=(float)$var[0];
+                            break;
+                        }
+                    }
+                }
+
               $this->container['value'] = $var[0];
               $this->container['originalvalue'] = $var[0];
               return;
