@@ -335,10 +335,10 @@ protected function tree($struct)
             if ($item['type']=='text_val') 	{
                 switch ($item['operator']){
                     case "like":
-                        $rez.=' (false!=preg_match("/'.strtr($item['value'],['%' => '(.*?)', '_' => '(.)']).'/iu", $'.$item['column'].'))';
+                        $rez.=' (0<preg_match("/^'.strtr(preg_quote($item['value']),['%' => '(.*?)', '_' => '(.)']).'$/iu", $'.$item['column'].'))';
                         break;
                     case "not like":
-                        $rez.=' (false===preg_match("/'.strtr($item['value'],['%' => '(.*?)', '_' => '(.)']).'/iu", $'.$item['column'].'))';
+                        $rez.=' (0==preg_match("/^'.strtr(preg_quote($item['value']),['%' => '(.*?)', '_' => '(.)']).'$/iu", $'.$item['column'].'))';
                         break;
                     default:{
                         //само сравнение - оператор = > < <> !=

@@ -1257,6 +1257,7 @@ private function RsFilter ()
     if (count(  $this->temp_rez_array['filter']) &&! $this->container['filter']) {
         $this->rez_array = $this->temp_rez_array['filter'];
         $this->RecordCount = count( $this->rez_array);
+        $this->PageCount = ceil($this->RecordCount /  $this->container['pagesize']);
         // предельные границы
         $this->AbsolutePosition_min_max[0] = 1; // в начале  запись $AbsolutePosition
         $this->AbsolutePosition_min_max[1] = $this->RecordCount -1; // в конце номер последней
@@ -1297,6 +1298,7 @@ private function RsFilter ()
      }
     // кол-во  записей
     $this->RecordCount = count( $this->rez_array);
+    $this->PageCount = ceil($this->RecordCount /  $this->container['pagesize']);
     // предельные границы
     $this->AbsolutePosition_min_max[0] = 1; // в начале запись $AbsolutePosition
     $this->AbsolutePosition_min_max[1] = $this->RecordCount; // в конце номер последней
