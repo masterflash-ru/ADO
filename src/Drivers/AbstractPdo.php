@@ -436,13 +436,18 @@ protected function normalizeType(array $data, array $ColumnMeta)
 {
     $rez=$data;
     foreach ($data as $field=>$value) {
-        if (isset($ColumnMeta[$field])){
-            if (in_array($ColumnMeta[$field]["Type"],[adTinyInt,adInteger,adBigInt,adSingle])){
-                $rez[$field]=(int)$value;
-            }
-            /*проверим тип, если это целове число, возвращаем как есть*/
-            if (in_array($ColumnMeta[$field]["Type"],[adDecimal,adDouble])){
-                $rez[$field]= str_replace(",",".",(float)$value);
+        if (is_null($value)){
+            //если значение null, то ничего не меняем
+            $rez[$field]=null;
+        } else {
+            if (isset($ColumnMeta[$field])){
+                if (in_array($ColumnMeta[$field]["Type"],[adTinyInt,adInteger,adBigInt,adSingle])){
+                    $rez[$field]=(int)$value;
+                }
+                /*проверим тип, если это целове число, возвращаем как есть*/
+                if (in_array($ColumnMeta[$field]["Type"],[adDecimal,adDouble])){
+                    $rez[$field]= str_replace(",",".",(float)$value);
+                }
             }
         }
     }
