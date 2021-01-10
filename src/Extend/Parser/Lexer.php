@@ -41,7 +41,7 @@ class Lexer
     // }}}
 
     // {{{ incidental functions
- public  function __construct($string = '', $lookahead = 0, $lexeropts)
+ public  function __construct($string = '', $lookahead = 0, $lexeropts=null)
     {
         $this->string = $string;
         $this->stringLen = strlen($string);
