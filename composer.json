@@ -13,8 +13,8 @@
     "prefer-stable": true,
     "require": {
         "php": "^7.2 || ^8.0",
-        "laminas/laminas-hydrator": "^2.4",
-        "laminas/laminas-db": "^2.11"
+        "laminas/laminas-hydrator": "*",
+        "laminas/laminas-db": "*"
     },
     "autoload": {
         "psr-4": {
